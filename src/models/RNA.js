@@ -1,6 +1,7 @@
 import cytoscape from 'cytoscape';
 
 import { ModelBase } from './modelBase';
+import { drawRadiate } from '../layouts/radiate';
 
 /**
  * Simple dot-bracket notation parser
@@ -52,8 +53,19 @@ class Structure {
 	createCy(container, layout) {
 		const elements = [];
 		const styles = [];
-		for (const base of this.baseList) {
-			elements.push({data: {id: base.ind}})
+		// Bases
+		if (layout == 'radiate') {
+			var coords = drawRadiate(this.baseList);
+		}
+		if (layout == 'radiate') {
+		}
+		for (let i = 0; i < this.baseList.length; ++i) {
+			let base = this.baseList[i];
+			let baseEl = {data: {id: base.ind}};
+			if (layout == 'radiate') {
+				baseEl['position'] = coords[i];
+			}
+			elements.push(baseEl);
 		}
 		// Backbone
 		for (let i = 0; i < this.baseList.length - 1; ++i) {
@@ -80,7 +92,6 @@ class Structure {
 			cbpStyle["style"]["control-point-weight"] = 0.5;
 		}
 		styles.push(cbpStyle);
-		console.log(styles);
 
 		// Set layout (base position)
 		let layoutDict = {};
@@ -89,14 +100,17 @@ class Structure {
 		} else if (layout == 'line') {
 			layoutDict = {'name': 'grid', 'rows': 1};
 		} else {
-			layoutDict = {};
+			layoutDict = {'name': 'preset'};
 		}
-  	var cy = cytoscape({
+		let cyDist = {
   		container: container,
   	  elements: elements,
 			layout: layoutDict,
 			style: styles
-  	 });
+  	 };
+
+		console.log(cyDist);
+		var cy = cytoscape(cyDist);
 		this.cy = cy;
 	}
 }

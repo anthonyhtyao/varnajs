@@ -22,6 +22,10 @@ class ModelBase {
 	setPartner(partner) {
 		this.partner = partner;
 	}
+
+	getPartner() {
+		return this.partner;
+	}
 }
 
 
