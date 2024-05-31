@@ -49,25 +49,53 @@ class Structure {
 	 *	Create cytoscape drawing
 	 *	@param {DOM element} container - where to draw cytoscape
 	 */
-	createCy(container) {
+	createCy(container, layout) {
 		const elements = [];
+		const styles = [];
 		for (const base of this.baseList) {
 			elements.push({data: {id: base.ind}})
 		}
 		// Backbone
 		for (let i = 0; i < this.baseList.length - 1; ++i) {
-			elements.push({data: {id: 'back'+i, source: i, target: i+1}});
+			elements.push({data: {id: 'back'+i, source: i, target: i+1}, "classes": "backbone"});
 		}
 		// Canonical bps
 		for (const base of this.baseList) {
 			if (base.partner > base.ind) {
-				elements.push({data: {id: 'bp'+base.ind, source: base.ind, target: base.partner}, style: { lineColor: "blue" }});
+				let edgeEl = {"data": {"id": "bp"+base.ind, "source": base.ind, "target": base.partner}, "classes": "cbp"};
+				if (layout == "line") {
+					edgeEl["style"] = {"control-point-distance": -(base.partner-base.ind)*20};
+				}
+				elements.push(edgeEl);
 			}
 		}
-  	 var cy = cytoscape({
-  	   container: container,
-  	   elements: elements,
-		layout: { name: 'circle'}
+		let cbpStyle = {
+			"selector": "edge.cbp",
+			"style": {
+				"line-color": "blue"
+			}
+		}
+		if (layout == "line") {
+			cbpStyle["style"]["curve-style"] = "unbundled-bezier";
+			cbpStyle["style"]["control-point-weight"] = 0.5;
+		}
+		styles.push(cbpStyle);
+		console.log(styles);
+
+		// Set layout (base position)
+		let layoutDict = {};
+		if (layout == 'circle') {
+			layoutDict = {'name': 'circle'};
+		} else if (layout == 'line') {
+			layoutDict = {'name': 'grid', 'rows': 1};
+		} else {
+			layoutDict = {};
+		}
+  	var cy = cytoscape({
+  		container: container,
+  	  elements: elements,
+			layout: layoutDict,
+			style: styles
   	 });
 		this.cy = cy;
 	}

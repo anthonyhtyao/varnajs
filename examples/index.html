@@ -1,5 +1,6 @@
 <html>
 	<head>
+      <title>VARNA.js</title>
 		<script src="../build/varna.min.js"></script>
 	</head>
 
@@ -12,8 +13,14 @@
     }
 </style>
 	<body>
-		hello
-		<input type="text" id="ss"> <button onclick="varnajs.drawRNA(document.getElementById('ss').value, document.getElementById('cy'))">Click me</button> 
+      Welcome to VARNA.js <br/>
+
+		<input type="text" id="ss">
+    <select id="layout">
+        <option value="circle">Circle</option>
+        <option value="line">Line</option>
+    </select>
+    <button onclick="varnajs.drawRNA(document.getElementById('ss').value, document.getElementById('cy'), document.getElementById('layout').value)">Click me</button> 
 
     <div id="cy"></div>
 	</body>
