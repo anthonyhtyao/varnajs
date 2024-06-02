@@ -2,6 +2,7 @@ import cytoscape from 'cytoscape';
 
 import { ModelBase } from './modelBase';
 import { drawRadiate } from '../layouts/radiate';
+import { drawNAView } from '../layouts/naview/naview';
 
 /**
  * Simple dot-bracket notation parser
@@ -56,13 +57,13 @@ class Structure {
 		// Bases
 		if (layout == 'radiate') {
 			var coords = drawRadiate(this.baseList);
-		}
-		if (layout == 'radiate') {
+		} else if (layout == 'naview') {
+			var coords = drawNAView(this.baseList);
 		}
 		for (let i = 0; i < this.baseList.length; ++i) {
 			let base = this.baseList[i];
 			let baseEl = {data: {id: base.ind}};
-			if (layout == 'radiate') {
+			if ((layout == 'radiate') || (layout == 'naview')) {
 				baseEl['position'] = coords[i];
 			}
 			elements.push(baseEl);
