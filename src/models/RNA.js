@@ -1,8 +1,7 @@
 import cytoscape from 'cytoscape';
 
 import { ModelBase } from './modelBase';
-import { drawRadiate } from '../layouts/radiate';
-import { drawNAView } from '../layouts/naview/naview';
+import { drawBases } from '../layouts/layout';
 
 /**
  * Simple dot-bracket notation parser
@@ -55,17 +54,16 @@ class Structure {
 		const elements = [];
 		const styles = [];
 		// Bases
-		if (layout == 'radiate') {
-			var coords = drawRadiate(this.baseList);
-		} else if (layout == 'naview') {
-			var coords = drawNAView(this.baseList);
-		}
+		var coords = drawBases(this.baseList, layout);
+		// if (layout == 'radiate') {
+		// 	var coords = drawRadiate(this.baseList);
+		// } else if (layout == 'naview') {
+		// 	var coords = drawNAView(this.baseList);
+		// }
 		for (let i = 0; i < this.baseList.length; ++i) {
 			let base = this.baseList[i];
 			let baseEl = {data: {id: base.ind}};
-			if ((layout == 'radiate') || (layout == 'naview')) {
-				baseEl['position'] = coords[i];
-			}
+			baseEl['position'] = coords[i];
 			elements.push(baseEl);
 		}
 		// Backbone
@@ -95,14 +93,7 @@ class Structure {
 		styles.push(cbpStyle);
 
 		// Set layout (base position)
-		let layoutDict = {};
-		if (layout == 'circle') {
-			layoutDict = {'name': 'circle'};
-		} else if (layout == 'line') {
-			layoutDict = {'name': 'grid', 'rows': 1};
-		} else {
-			layoutDict = {'name': 'preset'};
-		}
+		let layoutDict = {'name': 'preset'};
 		let cyDist = {
   		container: container,
   	  elements: elements,
