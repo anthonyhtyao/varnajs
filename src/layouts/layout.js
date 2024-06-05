@@ -2,9 +2,15 @@ import { drawRadiate } from './radiate';
 import { drawNAView } from './naview/naview';
 import { drawLine } from './line';
 import { drawCircle } from './circle';
+import { drawTurtle } from './turtle/turtle';
 
 
-let layouts = {'line': drawLine, 'circle': drawCircle, 'radiate': drawRadiate, 'naview': drawNAView};
+let layouts = {'line': drawLine,
+							 'circle': drawCircle,
+							 'radiate': drawRadiate,
+	             'naview': drawNAView,
+							 'turtle': drawTurtle,
+							};
 const layoutNames = Object.keys(layouts);
 
 
