@@ -12,7 +12,7 @@ const TYPE_LOOP2 = 5;
 const EXTERIOR_Y = 100.0;
 const MATH_PI_HALF = Math.PI / 2;
 
-let drawTurtle = function(baseList) {
+export function drawTurtle(baseList) {
 
     const drawArcs = 1;
     const paired = 35.0;
@@ -69,7 +69,7 @@ let drawTurtle = function(baseList) {
  *
  * @returns first paired base
  */
-let handleExteriorBases = function (ptable, currentBase, baseInformation, direction) {
+function handleExteriorBases(ptable, currentBase, baseInformation, direction) {
     const length = ptable[0];
     if (currentBase > 1) {
         baseInformation[currentBase].angle = baseInformation[currentBase].angle + direction * MATH_PI_HALF;
@@ -95,7 +95,7 @@ let handleExteriorBases = function (ptable, currentBase, baseInformation, direct
 // Count no. of base pairs and consecutive pairs on a loop
 // i - last base of first stem half
 // m - no. of base pairs; n - no. of consecutive pairs
-let countLoopPairs = function (i, ptable) {
+function countLoopPairs(i, ptable) {
     const end = ptable[i++];
     var m = 1;
     var n = 1;
@@ -111,7 +111,7 @@ let countLoopPairs = function (i, ptable) {
     return [m, n];
 }
 
-let detectBulge = function (start, ptable) {
+function detectBulge(start, ptable) {
     let bulge = 0;
     let end = ptable[start];
     let iterate = 1;
@@ -151,7 +151,7 @@ let detectBulge = function (start, ptable) {
     return bulge;
 }
 
-let handleLoop = function (i, ptable, paired, unpaired, baseInformation, direction) {
+function handleLoop(i, ptable, paired, unpaired, baseInformation, direction) {
     let start = i;
     const end = ptable[i];
     let [m, n] = countLoopPairs(i, ptable);
@@ -271,7 +271,7 @@ let handleLoop = function (i, ptable, paired, unpaired, baseInformation, directi
     return;
 }
 
-let handleStem = function (ptable, i, paired, unpaired, baseInformation, direction) {
+function handleStem(ptable, i, paired, unpaired, baseInformation, direction) {
     let end = ptable[i] + 1;
     baseInformation[i].baseType = TYPE_STEM;
     i++;
@@ -305,7 +305,7 @@ let handleStem = function (ptable, i, paired, unpaired, baseInformation, directi
 /**
  * Compute angles for all loops
  */
-let computeAffineCoordinates = function (ptable, paired, unpaired, baseInformation) {
+export function computeAffineCoordinates(ptable, paired, unpaired, baseInformation) {
     const length = ptable[0];
     let currentBase = 1;
     const direction = -1;
@@ -372,7 +372,7 @@ let computeAffineCoordinates = function (ptable, paired, unpaired, baseInformati
 /**
  * Calculate the coordinates for the drawing with the given angle angles
  */
-let affineToCartesianCoordinates = function (baseInformation, length, x, y) {
+export function affineToCartesianCoordinates(baseInformation, length, x, y) {
     if (length < 1) {
         return;
     }
@@ -382,11 +382,10 @@ let affineToCartesianCoordinates = function (baseInformation, length, x, y) {
     for (let i = 1; i < length; i++) {
         angle = angle - baseInformation[i + 1].angle;
 
-        x[i] = x[i - 1] + baseInformation[i].distance * Math.cos(angle);
-        y[i] = y[i - 1] + baseInformation[i].distance * Math.sin(angle);
+        x[i] = x[i - 1] + baseInformation[i].distance * Math.cos(-angle);
+        y[i] = y[i - 1] + baseInformation[i].distance * Math.sin(-angle);
     }
     return;
 }
 
 
-export {drawTurtle, computeAffineCoordinates, affineToCartesianCoordinates };
