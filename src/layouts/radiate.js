@@ -28,6 +28,7 @@ let drawLoop = function(i, j, x, y, dirAngle, coords, centers, angles, baseList)
 	let BASE_PAIR_DISTANCE = 65;
 	let LOOP_DISTANCE = 40;
 	let MULTILOOP_DISTANCE = 35;
+	let straightBulges = true;
 	// BasePaired
 	if (baseList[i].getPartner() == j) {
 		let normalAngle = Math.PI / 2.0;
@@ -66,8 +67,7 @@ let drawLoop = function(i, j, x, y, dirAngle, coords, centers, angles, baseList)
 			multiLoopRadius = determineRadius(numHelices, mlSize - numHelices, (totalLength) / (2.0 * Math.PI), BASE_PAIR_DISTANCE, MULTILOOP_DISTANCE);
 			angleIncrementML = -2.0 * Math.asin(MULTILOOP_DISTANCE / (2.0 * multiLoopRadius));
 			angleIncrementBP = -2.0 * Math.asin(BASE_PAIR_DISTANCE / (2.0 * multiLoopRadius));
-		}
-		else {
+		} else {
 			multiLoopRadius = 35.0;
 			angleIncrementBP = -2.0 * Math.asin(BASE_PAIR_DISTANCE / (2.0 * multiLoopRadius));
 			angleIncrementML = (-2.0 * Math.PI - angleIncrementBP) / 2.0;
@@ -93,11 +93,15 @@ let drawLoop = function(i, j, x, y, dirAngle, coords, centers, angles, baseList)
 		for (k = basesMultiLoop.length - 1; k >= 0; k--) {
 			l = basesMultiLoop[k];
 			centers[l] = mlCenter;
-			let isPaired = (baseList[i].getPartner() != -1);
-			let isPaired3 = isPaired && (baseList[i].getPartner() < l);
+			let isPaired = (baseList[l].getPartner() != -1);
+			let isPaired3 = isPaired && (baseList[l].getPartner() < l);
 			let isPaired5 = isPaired && !isPaired3;
 			if (isPaired3) {
-				baseAngle = correctHysteresis(baseAngle + angleIncrementBP / 2.) - angleIncrementBP / 2.;
+				if ((numHelices == 2) && straightBulges) {
+					baseAngle = dirAngle-angleIncrementBP/2.;
+				} else {
+					baseAngle = correctHysteresis(baseAngle + angleIncrementBP / 2.) - angleIncrementBP / 2.;
+				}
 				currInterval.el1 = baseAngle;
 				intervals.push({el1: currUnpaired, el2: currInterval});
 				currInterval = {el1: -1.0, el2: -1.0};
@@ -114,10 +118,11 @@ let drawLoop = function(i, j, x, y, dirAngle, coords, centers, angles, baseList)
 				baseAngle += angleIncrementML;
 			}
 		}
+		console.log("Base Angle", baseAngle);
 		currInterval.el1 = dirAngle - Math.PI - 0.5 * angleIncrementBP;
 		intervals.push( {el1: currUnpaired, el2: currInterval } );
 
-		for(let z = 0; z < intervals.length; z++){
+		for (let z = 0; z < intervals.length; z++) {
 			let mina = intervals[z].el2.el1;
 			let maxa = normalizeAngle(intervals[z].el2.el2, mina);
 
@@ -178,12 +183,12 @@ let determineRadius = function(nbHel, nbUnpaired, startRadius, bpdist, multidist
 	return x;
 }
 
-let objFun = function(n1, n2, r, bpdist, multidist) {
+function objFun(n1, n2, r, bpdist, multidist) {
 	return ( n1 * 2.0 * Math.asin(bpdist / (2.0 * r)) + n2 * 2.0
 				* Math.asin( multidist / (2.0 * r)) - (2.0 * Math.PI));
 }
 
-let correctHysteresis = function(angle){
+function correctHysteresis(angle) {
 	let hystAttr = [ 0.0, Math.PI/4.0, Math.PI/2.0, 3.0*Math.PI/4.0, Math.PI, 5.0*(Math.PI)/4.0, 3.0*(Math.PI)/2.0, 7.0*(Math.PI)/4.0];
 	let result = normalizeAngleSec(angle);
 	for (let i = 0; i < hystAttr.length; i++){
@@ -195,19 +200,18 @@ let correctHysteresis = function(angle){
 	return result;
 }
 
-let normalizeAngleSec = function(angle){
-	return normalizeAngle(angle,0.0);
+function normalizeAngleSec(angle) {
+	return normalizeAngle(angle, 0.0);
 }
 
-let normalizeAngle = function(angle,fromVal) {
-	let toVal = fromVal +2.0*Math.PI;
+function normalizeAngle(angle, fromVal) {
+	let toVal = fromVal + 2.0 * Math.PI;
 	let result = angle;
-	while(result<fromVal){
-		result += 2.0*Math.PI;
+	while (result < fromVal) {
+		result += 2.0 * Math.PI;
 	}
-	while(result >= toVal)
-	{
-		result -= 2.0*Math.PI;
+	while (result >= toVal) {
+		result -= 2.0  *Math.PI;
 	}
 	return result;
 }
