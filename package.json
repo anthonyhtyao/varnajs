@@ -27,7 +27,8 @@
   },
   "homepage": "https://gitlab.com/htyao/varnajs#readme",
   "dependencies": {
-    "cytoscape": "^3.29.2"
+    "cytoscape": "^3.29.2",
+    "math-float64-signbit": "^1.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-babel": "^6.0.4",
