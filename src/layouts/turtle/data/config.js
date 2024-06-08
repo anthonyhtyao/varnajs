@@ -47,7 +47,7 @@ function cfgCreateConfigArc(angle, numberOfArcSegments) {
     return newConfigArc;
 }
 
-function cfgCloneConfig(cfg) {
+export function cfgCloneConfig(cfg) {
     var clonedCfg = {};
     clonedCfg.radius = cfg.radius;
     clonedCfg.minRadius = cfg.minRadius;
@@ -56,7 +56,7 @@ function cfgCloneConfig(cfg) {
 
     var numberOfArcs = cfg.numberOfArcs;
     clonedCfg.cfgArcs = new Array(numberOfArcs);
-    for (var currentArc = 0; currentArc < numberOfArcs; ++currentArc) {
+    for (let currentArc = 0; currentArc < numberOfArcs; ++currentArc) {
         clonedCfg.cfgArcs[currentArc] = {};
         clonedCfg.cfgArcs[currentArc].numberOfArcSegments = cfg.cfgArcs[currentArc].numberOfArcSegments;
         clonedCfg.cfgArcs[currentArc].arcAngle = cfg.cfgArcs[currentArc].arcAngle;
@@ -88,7 +88,7 @@ function cfgPrintConfig(cfg) {
 /*---   access to config elements   ----------------------------------------*/
 /*--------------------------------------------------------------------------*/
 
-function getArcAngle(cfg, currentArc) {
+export function getArcAngle(cfg, currentArc) {
     return cfg.cfgArcs[currentArc].arcAngle;
 }
 
@@ -357,7 +357,7 @@ function cfgGenHandleLoop(baseNr, ptable, baseInformation, unpaired, paired) {
 }
 
 // documentation at header file
-let cfgGenerateConfig = function (ptable, baseInformation, unpaired, paired) {
+export function cfgGenerateConfig(ptable, baseInformation, unpaired, paired) {
     var length = ptable[0];
     var i = 1;
     while (i < length) {
@@ -404,7 +404,7 @@ function cfgUpdateMinRadius(cfg, unpaired, paired) {
     cfg.minRadius = minRadius;
 }
 
-function cfgApplyChanges(cfg, loopName, deltaCfg, radiusNew, puzzler) {
+export function cfgApplyChanges(cfg, loopName, deltaCfg, radiusNew, puzzler) {
     /// - start with adjusting config angles; if applicable
     if (deltaCfg != null) {
         for (var currentArc = 0; currentArc < cfg.numberOfArcs; currentArc++) {
@@ -449,7 +449,7 @@ function cfgApplyChanges(cfg, loopName, deltaCfg, radiusNew, puzzler) {
     return newRadius;
 }
 
-function cfgIsValid(cfg, deltaCfg) {
+export function cfgIsValid(cfg, deltaCfg) {
     if (deltaCfg == null) {
         return 0;
     }
@@ -470,4 +470,3 @@ function cfgIsValid(cfg, deltaCfg) {
 }
 
 
-export {cfgGenerateConfig, getArcAngle};

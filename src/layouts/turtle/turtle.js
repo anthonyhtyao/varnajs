@@ -1,6 +1,6 @@
 // Modified and converted from RNAturtle.c
 
-import { cfgGenerateConfig, getArcAngle } from "./config";
+import { cfgGenerateConfig, getArcAngle } from "./data/config";
 
 const TYPE_BASE_NONE = 0;
 const TYPE_EXTERIOR = 1;
@@ -389,4 +389,4 @@ let affineToCartesianCoordinates = function (baseInformation, length, x, y) {
 }
 
 
-export {drawTurtle};
+export {drawTurtle, computeAffineCoordinates, affineToCartesianCoordinates };
