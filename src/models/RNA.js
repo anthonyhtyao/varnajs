@@ -80,16 +80,40 @@ class Structure {
 				elements.push(edgeEl);
 			}
 		}
+
+		let baseStyle = {
+			"selector": "node",
+			"style": {
+				"width": 20,
+				"height": 20,
+				"background-color": "rgb(242, 242, 242)",
+				"border-width": 1.5,
+				"border-color": "rgb(91, 91, 91)"
+			}
+		}
+
+		let backboneStyle = {
+			"selector": "edge.backbone",
+			"style": {
+				"line-color": "rgb(91, 91, 91)",
+				"width": 1.0,
+			}
+		}
+		
 		let cbpStyle = {
 			"selector": "edge.cbp",
 			"style": {
-				"line-color": "blue"
+				"line-color": "blue",
+				"width": 1.0,
 			}
 		}
+
 		if (layout == "line") {
 			cbpStyle["style"]["curve-style"] = "unbundled-bezier";
 			cbpStyle["style"]["control-point-weight"] = 0.5;
 		}
+		styles.push(baseStyle);
+		styles.push(backboneStyle);
 		styles.push(cbpStyle);
 
 		// Set layout (base position)

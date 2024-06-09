@@ -8,6 +8,7 @@ let drawRadiate = function(baseList){
 	var centers = [];
 	var angles = [];
 	let dirAngle = -1;
+	let spaceBetweenBases = 1;
 
 	for (let i = 0; i < baseList.length; i++) {
 		coords[i] = {x: 0, y: 0};
@@ -16,6 +17,11 @@ let drawRadiate = function(baseList){
 	// TODO: Flat exteriorloop
 	// Currently we ignore flat exteriorloop
 	drawLoop(0, baseList.length - 1, 0, 0, dirAngle, coords, centers, angles, baseList);
+
+	for (let i = 0; i < coords.length; i++) {
+		coords[i].x *= spaceBetweenBases;
+		coords[i].y *= spaceBetweenBases;
+	}
 	return coords;
 }
 
@@ -118,7 +124,6 @@ let drawLoop = function(i, j, x, y, dirAngle, coords, centers, angles, baseList)
 				baseAngle += angleIncrementML;
 			}
 		}
-		console.log("Base Angle", baseAngle);
 		currInterval.el1 = dirAngle - Math.PI - 0.5 * angleIncrementBP;
 		intervals.push( {el1: currUnpaired, el2: currInterval } );
 

@@ -15,8 +15,10 @@ const MATH_PI_HALF = Math.PI / 2;
 export function drawTurtle(baseList) {
 
     const drawArcs = 1;
-    const paired = 35.0;
-    const unpaired = 25.0;
+    // const paired = 35.0;
+    // const unpaired = 25.0;
+    const paired = 65.0;
+    const unpaired = 40.0;
 
     // Create 1-index ptable and baseInformation
     var ptable = [];

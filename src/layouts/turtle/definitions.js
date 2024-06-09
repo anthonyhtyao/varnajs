@@ -5,8 +5,10 @@ export function createPuzzlerOptions() {
 
   // drawing behavior
   puzzler.drawArcs = 1;
-  puzzler.paired = 35.0;
-  puzzler.unpaired = 25.0;
+  // puzzler.paired = 35.0;
+  // puzzler.unpaired = 25.0;
+  puzzler.paired = 65.0;
+  puzzler.unpaired = 40.0;
 
   // intersection resolution behavior
   puzzler.checkExteriorIntersections = 1;

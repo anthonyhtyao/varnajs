@@ -1,7 +1,7 @@
 let drawCircle = function(baseList) {
 	var coords = [];
 	let BASE_RADIUS = 10;
-	let spaceBetweenBases = 5;
+	let spaceBetweenBases = 1;
 	let l = baseList.length;
 	let radius = Math.round(3 * (l + 1) * BASE_RADIUS) / (2 * Math.PI) * spaceBetweenBases;
 	for (let i = 0; i < l; i++) {

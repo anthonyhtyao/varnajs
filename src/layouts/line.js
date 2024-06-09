@@ -3,7 +3,7 @@
 
 let drawLine = function (baseList) {
 	var coords = [];
-	let spaceBetweenBases = 10;
+	let spaceBetweenBases = 1;
 	for (let i = 0; i < baseList.length; i++) {
 		coords[i] = {x: i * spaceBetweenBases * 20, y: 0};
 	}
