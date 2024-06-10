@@ -1,4 +1,5 @@
 import { Structure } from './models/RNA';
+import { VARNAConfig } from './models/config';
 
 /**
  * Basic RNA draw function
@@ -7,11 +8,11 @@ import { Structure } from './models/RNA';
  * @param {Element} container - HTML element to draw RNA
  * @param {string} layout - layout of RNA bases
  */
-let drawRNA = function (dbn, container, layout='circle') {
+let drawRNA = function (dbn, container, varnaCfg) {
 	console.log(dbn);
 	let v = new Structure(dbn);
 
-	v.createCy(container, layout);
+	v.createCy(container, varnaCfg);
 }
 
-export {drawRNA};
+export {drawRNA, VARNAConfig};

@@ -13,10 +13,12 @@ let layouts = {'line': drawLine,
 							 'turtle': drawTurtle,
 							 'puzzler': drawPuzzler,
 							};
+
 const layoutNames = Object.keys(layouts);
 
 
-let drawBases = function(baseList, layout) {
+let drawBases = function(baseList, varnaCfg) {
+	let layout = varnaCfg.layout;
 	if (layoutNames.includes(layout)) {
 		console.log("hi");
 		return layouts[layout](baseList);

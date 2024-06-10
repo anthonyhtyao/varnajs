@@ -24,7 +24,7 @@
         <option value="turtle">Turtle</option>
         <option value="puzzler">Puzzler</option>
     </select>
-    <button onclick="varnajs.drawRNA(document.getElementById('ss').value, document.getElementById('cy'), document.getElementById('layout').value)">Click me</button> 
+    <button onclick="varnajs.drawRNA(document.getElementById('ss').value, document.getElementById('cy'), new varnajs.VARNAConfig({layout: document.getElementById('layout').value}))">Click me</button> 
 
     <div id="cy"></div>
 	</body>
