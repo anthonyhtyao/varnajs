@@ -11,6 +11,7 @@
     "build:cjs": "cross-env FILE=cjs rollup -c",
     "build:umd": "cross-env FILE=umd rollup -c",
     "build:min": "cross-env FILE=min rollup -c",
+    "doc": "jsdoc -d docs src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -37,6 +38,7 @@
     "@rollup/plugin-replace": "^5.0.5",
     "@rollup/plugin-terser": "^0.4.4",
     "cross-env": "^7.0.3",
+    "jsdoc": "^4.0.3",
     "rollup": "^4.18.0"
   }
 }
