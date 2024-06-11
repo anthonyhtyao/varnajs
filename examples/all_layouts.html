@@ -66,7 +66,11 @@
 				// let layouts = ['circle', 'line'];
 				for (let i = 0; i < layouts.length; i++) {
 					let layout = layouts[i];
-					varnajs.drawRNA(ss, document.getElementById(layout), new varnajs.VARNAConfig({layout: layout}));
+					let vConfig = new varnajs.VARNAConfig({
+						layout: layout,
+						baseInnerColor: "red",
+					});
+					varnajs.drawRNA(ss, document.getElementById(layout), vConfig);
 				}
 			}
 		</script>

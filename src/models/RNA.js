@@ -51,11 +51,11 @@ class Structure {
 	 *	Create cytoscape drawing
 	 *	@param {DOM element} container - where to draw cytoscape
 	 */
-	createCy(container, varnaCfg) {
+	createCy(container, cfg) {
 		const elements = [];
 		const styles = [];
 		// Bases
-		var coords = drawBases(this.baseList, varnaCfg);
+		var coords = drawBases(this.baseList, cfg);
 		// if (layout == 'radiate') {
 		// 	var coords = drawRadiate(this.baseList);
 		// } else if (layout == 'naview') {
@@ -75,7 +75,7 @@ class Structure {
 		for (const base of this.baseList) {
 			if (base.partner > base.ind) {
 				let edgeEl = {"data": {"id": "bp"+base.ind, "source": base.ind, "target": base.partner}, "classes": "cbp"};
-				if (varnaCfg.layout == Layouts.LINE) {
+				if (cfg.layout == Layouts.LINE) {
 					edgeEl["style"] = {"control-point-distance": -(base.partner-base.ind)*20};
 				}
 				elements.push(edgeEl);
@@ -87,29 +87,29 @@ class Structure {
 			"style": {
 				"width": 20,
 				"height": 20,
-				"background-color": "rgb(242, 242, 242)",
-				"border-width": 1.5,
-				"border-color": "rgb(91, 91, 91)"
+				"background-color": cfg.baseInnerColor,
+				"border-width": cfg.baseOutlineThickness,
+				"border-color": cfg.baseOutlineColor,
 			}
 		}
 
 		let backboneStyle = {
 			"selector": "edge.backbone",
 			"style": {
-				"line-color": "rgb(91, 91, 91)",
-				"width": 1.0,
+				"line-color": cfg.backboneColor,
+				"width": cfg.backboneThickness,
 			}
 		}
 		
 		let cbpStyle = {
 			"selector": "edge.cbp",
 			"style": {
-				"line-color": "blue",
-				"width": 1.0,
+				"line-color": cfg.bpColor,
+				"width": cfg.bpThickness,
 			}
 		}
 
-		if (varnaCfg.layout == Layouts.LINE) {
+		if (cfg.layout == Layouts.LINE) {
 			cbpStyle["style"]["curve-style"] = "unbundled-bezier";
 			cbpStyle["style"]["control-point-weight"] = 0.5;
 		}
