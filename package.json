@@ -11,7 +11,7 @@
     "build:cjs": "cross-env FILE=cjs rollup -c",
     "build:umd": "cross-env FILE=umd rollup -c",
     "build:min": "cross-env FILE=min rollup -c",
-    "doc": "jsdoc -d docs src/index.js",
+    "doc": "jsdoc -r -c jsdoc_config.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
