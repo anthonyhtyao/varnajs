@@ -13,6 +13,7 @@ let drawRNA = function (dbn, container, varnaCfg) {
 	let v = new Structure(dbn);
 
 	v.createCy(container, varnaCfg);
+	return v;
 }
 
 export {drawRNA, VARNAConfig};
