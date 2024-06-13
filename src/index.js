@@ -6,7 +6,7 @@ import { VARNAConfig } from './models/config';
  *
  * @param {string} dbn - RNA in dot-bracket notation (dbn)
  * @param {Element} container - HTML element to draw RNA
- * @param {string} layout - layout of RNA bases
+ * @param {VARNAConfig} varnaCfg - VARNA configuration to draw
  */
 let drawRNA = function (dbn, container, varnaCfg) {
 	console.log(dbn);

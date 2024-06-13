@@ -12,13 +12,14 @@ const TYPE_LOOP2 = 5;
 const EXTERIOR_Y = 100.0;
 const MATH_PI_HALF = Math.PI / 2;
 
-export function drawTurtle(baseList) {
+export function drawTurtle(baseList, varnaCfg) {
 
     const drawArcs = 1;
     // const paired = 35.0;
     // const unpaired = 25.0;
-    const paired = 65.0;
-    const unpaired = 40.0;
+    const paired = varnaCfg.bpDistance;
+    const unpaired = varnaCfg.backboneLoop;
+    const spaceBetweenBases = varnaCfg.spaceBetweenBases;
 
     // Create 1-index ptable and baseInformation
     var ptable = [];
@@ -57,7 +58,7 @@ export function drawTurtle(baseList) {
 
     var coords = [];
     for (let i = 0; i < length; i++) {
-        coords.push({x: myX[i], y: myY[i]});
+        coords.push({x: myX[i] * spaceBetweenBases, y: myY[i] * spaceBetweenBases});
     }
 
     return coords;

@@ -4,24 +4,26 @@ import { Region } from "./region";
 import { Connection } from "./connection";
 import { Radloop } from "./radloop";
 
-let drawNAView = function(baseList){
+let drawNAView = function(baseList, varnaCfg){
 	//Calculates coordinates according to the NAView layout
 	var pairTable = [];
 
-  let spaceBetweenBases = 1;
+  let spaceBetweenBases = varnaCfg.spaceBetweenBases;
 
 	for(let i=0; i<baseList.length; i++){
     pairTable.push(baseList[i].getPartner());
 	}
 	var naView = new NAView();
+  // TODO: understand how exactly NAView draw
+  naView.BACKBONE_DISTANCE = varnaCfg.bpDistance;
 	let xy = naView.naview_xy_coordinates(pairTable);
 
 	// Updating individual base positions
 	var coords = []
 	for (let i = 0; i < baseList.length; i++) {
     coords.push({
-		  x: Math.round(xy.x[i] * 2.5 * spaceBetweenBases),
-			y: Math.round(xy.y[i] * 2.5 * spaceBetweenBases)
+		  x: Math.round(xy.x[i] * spaceBetweenBases),
+			y: Math.round(xy.y[i] * spaceBetweenBases)
 		});
 	}
 	return coords;
@@ -45,7 +47,7 @@ let NAView = function(){
 	this._h = null;
 	// private boolean noIterationFailureYet = true;
 	this.HELIX_FACTOR = 0.6;
-	this.BACKBONE_DISTANCE = 27;
+	this.BACKBONE_DISTANCE = 65;
 }
 
 NAView.prototype.naview_xy_coordinates = function(ptable2){
@@ -735,6 +737,7 @@ NAView.prototype.traverse_loop = function traverse_loop(lp, anchor_connection){
     for (ic = 0; ic < lp.getNconnection(); ic++) {
         if (icroot != ic) {
             cp = lp.getConnection(ic);
+          console.log(cp);
             //IM HERE
             this.generate_region(cp);
             this.traverse_loop(cp.getLoop(), cp);

@@ -12,9 +12,12 @@ import { getBulgeXY } from "./data/boundingBoxes";
 const EXTERIOR_Y = 100.0;
 const TYPE_BASE_NONE = 0;
 
-export function drawPuzzler(baseList) {
+export function drawPuzzler(baseList, varnaCfg) {
 
   const puzzler = createPuzzlerOptions();
+  puzzler.paired = varnaCfg.bpDistance;
+  puzzler.unpaired = varnaCfg.backboneLoop;
+  const spaceBetweenBases = varnaCfg.spaceBetweenBases;
 
   if (puzzler.paired / puzzler.unpaired > 2.0) {
     cosole.log("paired:unpaired > 2.0 . layout might be destroyed!");
@@ -116,7 +119,7 @@ export function drawPuzzler(baseList) {
 
   var coords = [];
   for (let i = 0; i < length; i++) {
-    coords.push({x: myX[i], y: myY[i]});
+    coords.push({x: myX[i] * spaceBetweenBases, y: myY[i] * spaceBetweenBases});
   }
 
   return coords;

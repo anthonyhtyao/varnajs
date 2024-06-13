@@ -21,7 +21,7 @@ let drawBases = function(baseList, varnaCfg) {
 	let layout = varnaCfg.layout;
 	if (layoutNames.includes(layout)) {
 		console.log("hi");
-		return layouts[layout](baseList);
+		return layouts[layout](baseList, varnaCfg);
 	} else {
 		throw new Error("Invaled layout");
 	}

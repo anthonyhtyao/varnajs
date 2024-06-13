@@ -1,14 +1,14 @@
 // Modified from drawrnajs and VARNA
 
 
-let drawRadiate = function(baseList){
+let drawRadiate = function(baseList, varnaCfg){
   //This function calculates the coordinates for each nucleotide
 	//according to the radiate layout
 	var coords = [];
 	var centers = [];
 	var angles = [];
 	let dirAngle = -1;
-	let spaceBetweenBases = 1;
+	let spaceBetweenBases = varnaCfg.spaceBetweenBases;
 
 	for (let i = 0; i < baseList.length; i++) {
 		coords[i] = {x: 0, y: 0};
@@ -16,7 +16,7 @@ let drawRadiate = function(baseList){
 	}
 	// TODO: Flat exteriorloop
 	// Currently we ignore flat exteriorloop
-	drawLoop(0, baseList.length - 1, 0, 0, dirAngle, coords, centers, angles, baseList);
+	drawLoop(0, baseList.length - 1, 0, 0, dirAngle, coords, centers, angles, baseList, varnaCfg);
 
 	for (let i = 0; i < coords.length; i++) {
 		coords[i].x *= spaceBetweenBases;
@@ -25,15 +25,15 @@ let drawRadiate = function(baseList){
 	return coords;
 }
 
-let drawLoop = function(i, j, x, y, dirAngle, coords, centers, angles, baseList){
+let drawLoop = function(i, j, x, y, dirAngle, coords, centers, angles, baseList, varnaCfg){
 	//Calculates loop coordinates
 	if (i > j) {
 		return;
 	}
 
-	let BASE_PAIR_DISTANCE = 65;
-	let LOOP_DISTANCE = 40;
-	let MULTILOOP_DISTANCE = 35;
+	let BASE_PAIR_DISTANCE = varnaCfg.bpDistance;
+	let LOOP_DISTANCE = varnaCfg.backboneLoop;
+	let MULTILOOP_DISTANCE = varnaCfg.backboneMultiLoop;
 	let straightBulges = true;
 	// BasePaired
 	if (baseList[i].getPartner() == j) {
@@ -44,7 +44,7 @@ let drawLoop = function(i, j, x, y, dirAngle, coords, centers, angles, baseList)
 		coords[i].y = (y + BASE_PAIR_DISTANCE * Math.sin(dirAngle - normalAngle) / 2.0);
 		coords[j].x = (x + BASE_PAIR_DISTANCE * Math.cos(dirAngle + normalAngle) / 2.0);
 		coords[j].y = (y + BASE_PAIR_DISTANCE * Math.sin(dirAngle + normalAngle) / 2.0);
-		drawLoop(i + 1, j - 1, x + LOOP_DISTANCE * Math.cos(dirAngle), y + LOOP_DISTANCE * Math.sin(dirAngle), dirAngle, coords, centers, angles, baseList);
+		drawLoop(i + 1, j - 1, x + LOOP_DISTANCE * Math.cos(dirAngle), y + LOOP_DISTANCE * Math.sin(dirAngle), dirAngle, coords, centers, angles, baseList, varnaCfg);
 	} else {
 		// Multiloop
 		let k = i;
@@ -150,10 +150,10 @@ let drawLoop = function(i, j, x, y, dirAngle, coords, centers, angles, baseList)
 			m = helices[k];
 			n = baseList[m].getPartner();
 			newAngle = (angles[m] + angles[n]) / 2.0;
-			drawLoop(m + 1, n - 1, (LOOP_DISTANCE * Math.cos(newAngle)) + (coords[m].x + coords[n].x) / 2.0,
+			drawLoop(m + 1, n - 1, (LOOP_DISTANCE * Math.cos(newAngle)) + (coords[m].x + coords[n].x) / 2.0, 
 						(LOOP_DISTANCE * Math.sin(newAngle))
 								+ (coords[m].y + coords[n].y) / 2.0, newAngle,
-						coords, centers, angles, baseList);
+						coords, centers, angles, baseList, varnaCfg);
 			}
 		}
 }
