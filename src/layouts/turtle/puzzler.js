@@ -1,6 +1,6 @@
 // Modified and converted from RNApuzzler.c
 
-import { createPuzzlerOptions, distanceToAngle } from "./definitions";
+import { distanceToAngle } from "./definitions";
 import { cfgGenerateConfig, getArcAngle } from "./data/config";
 import { buildConfigtree, updateBoundingBoxes} from "./data/configtree";
 import { computeAffineCoordinates, affineToCartesianCoordinates } from './turtle';
@@ -14,7 +14,7 @@ const TYPE_BASE_NONE = 0;
 
 export function drawPuzzler(baseList, varnaCfg) {
 
-  const puzzler = createPuzzlerOptions();
+  const puzzler = varnaCfg.puzzler;
   puzzler.paired = varnaCfg.bpDistance;
   puzzler.unpaired = varnaCfg.backboneLoop;
   const spaceBetweenBases = varnaCfg.spaceBetweenBases;

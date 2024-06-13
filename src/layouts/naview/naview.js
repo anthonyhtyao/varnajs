@@ -737,7 +737,6 @@ NAView.prototype.traverse_loop = function traverse_loop(lp, anchor_connection){
     for (ic = 0; ic < lp.getNconnection(); ic++) {
         if (icroot != ic) {
             cp = lp.getConnection(ic);
-          console.log(cp);
             //IM HERE
             this.generate_region(cp);
             this.traverse_loop(cp.getLoop(), cp);

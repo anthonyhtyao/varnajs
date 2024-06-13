@@ -26,7 +26,7 @@ export const Layouts = Object.freeze({
  * VARNAConfig defines the style of drawing
  * @class
  * @public
- * @property {Layouts} layout - base layout (default: radiate)
+ * @property {string} layout - base layout (default: Layouts.RADIATE)
  * @property {int} spaceBetweenBases - multiplier for base spacing
  * @property {int} bpDistance - distance between paired bases (length of canonical basepair)
  * @property {int} backboneLoop - backbone distance within a loop (radiate, turtle, puzzler)
@@ -38,6 +38,7 @@ export const Layouts = Object.freeze({
  * @property {int} backboneThickness - backbone thickness (default: 1)
  * @property {string} bpColor - basepair color (default: blue)
  * @property {int} bpThickness - basepair thickness (default: 1)
+ * @property {Puzzler} puzzler - puzzler setting
  */
 export class VARNAConfig {
 	// Layout related
@@ -59,8 +60,46 @@ export class VARNAConfig {
 	bpColor = "blue";
 	bpThickness = 1;
 	
+	// RNApuzzler config
+	puzzler = new Puzzler();
 	
 	// TODO: Check invalid argument
+	constructor (opt={}) {
+		Object.assign(this, opt);
+	}
+}
+
+
+/**
+ * Special configuration for RNApuzzler
+ * @class
+ * @public
+ * @property {bool} checkExteriorIntersections - flag for no interaction with exterior loop (default: true)
+ * @property {bool} checkSiblingIntersections - flag for no interaction with sibling loops default: true)
+ * @property {bool} checkAncestorIntersections - flag for no interaction with ancestor loops (default: true)
+ * @property {bool} optimize - flag to optimize layout (default: true)
+ */
+export class Puzzler{
+
+  // drawing behavior
+  drawArcs = 1;
+
+  // intersection resolution behavior
+  checkExteriorIntersections = true;
+  checkSiblingIntersections = true;
+  checkAncestorIntersections = true;
+  optimize = true;
+
+  // import behavior - unused for now
+  config = null;
+
+  // other stuff
+  filename = null;
+
+  numberOfChangesAppliedToConfig = 0;
+  psNumber = 0;
+  maximumNumberOfConfigChangesAllowed = null;
+
 	constructor (opt={}) {
 		Object.assign(this, opt);
 	}

@@ -1,34 +1,5 @@
 const epsilon7 = 1e-7;
 
-export function createPuzzlerOptions() {
-  let puzzler = {};
-
-  // drawing behavior
-  puzzler.drawArcs = 1;
-  // puzzler.paired = 35.0;
-  // puzzler.unpaired = 25.0;
-  puzzler.paired = 65.0;
-  puzzler.unpaired = 40.0;
-
-  // intersection resolution behavior
-  puzzler.checkExteriorIntersections = 1;
-  puzzler.checkSiblingIntersections = 1;
-  puzzler.checkAncestorIntersections = 1;
-  puzzler.optimize = 1;
-
-  // import behavior - unused for now
-  puzzler.config = null;
-
-  // other stuff
-  puzzler.filename = null;
-
-  puzzler.numberOfChangesAppliedToConfig = 0;
-  puzzler.psNumber = 0;
-  puzzler.maximumNumberOfConfigChangesAllowed = null;
-
-  return puzzler;
-}
-
 
 export function bubblesort(numValues, valuesLevel1, valuesLevel2, indices) {
   for (let i = 0; i < numValues; i++) {
