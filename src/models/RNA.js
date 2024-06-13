@@ -2,6 +2,7 @@ import cytoscape from 'cytoscape';
 
 import { ModelBase } from './modelBase';
 import { drawBases } from '../layouts/layout';
+import { Layouts } from './config';;
 
 /**
  * Simple dot-bracket notation parser
@@ -50,11 +51,11 @@ class Structure {
 	 *	Create cytoscape drawing
 	 *	@param {DOM element} container - where to draw cytoscape
 	 */
-	createCy(container, layout) {
+	createCy(container, cfg) {
 		const elements = [];
 		const styles = [];
 		// Bases
-		var coords = drawBases(this.baseList, layout);
+		var coords = drawBases(this.baseList, cfg);
 		// if (layout == 'radiate') {
 		// 	var coords = drawRadiate(this.baseList);
 		// } else if (layout == 'naview') {
@@ -74,22 +75,48 @@ class Structure {
 		for (const base of this.baseList) {
 			if (base.partner > base.ind) {
 				let edgeEl = {"data": {"id": "bp"+base.ind, "source": base.ind, "target": base.partner}, "classes": "cbp"};
-				if (layout == "line") {
+				if (cfg.layout == Layouts.LINE) {
 					edgeEl["style"] = {"control-point-distance": -(base.partner-base.ind)*20};
 				}
 				elements.push(edgeEl);
 			}
 		}
+
+		let baseStyle = {
+			"selector": "node",
+			"style": {
+				"width": 20,
+				"height": 20,
+				"background-color": cfg.baseInnerColor,
+				"border-width": cfg.baseOutlineThickness,
+				"border-color": cfg.baseOutlineColor,
+				"visibility": cfg.drawBases ? "visible" : "hidden",
+			},
+		}
+
+		let backboneStyle = {
+			"selector": "edge.backbone",
+			"style": {
+				"line-color": cfg.backboneColor,
+				"width": cfg.backboneThickness,
+				"visibility": cfg.drawBackbone? "visible" : "hidden",
+			}
+		}
+		
 		let cbpStyle = {
 			"selector": "edge.cbp",
 			"style": {
-				"line-color": "blue"
+				"line-color": cfg.bpColor,
+				"width": cfg.bpThickness,
 			}
 		}
-		if (layout == "line") {
+
+		if (cfg.layout == Layouts.LINE) {
 			cbpStyle["style"]["curve-style"] = "unbundled-bezier";
 			cbpStyle["style"]["control-point-weight"] = 0.5;
 		}
+		styles.push(baseStyle);
+		styles.push(backboneStyle);
 		styles.push(cbpStyle);
 
 		// Set layout (base position)
