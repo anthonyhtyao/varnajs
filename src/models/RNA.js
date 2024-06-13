@@ -90,7 +90,8 @@ class Structure {
 				"background-color": cfg.baseInnerColor,
 				"border-width": cfg.baseOutlineThickness,
 				"border-color": cfg.baseOutlineColor,
-			}
+				"visibility": cfg.drawBases ? "visible" : "hidden",
+			},
 		}
 
 		let backboneStyle = {
@@ -98,6 +99,7 @@ class Structure {
 			"style": {
 				"line-color": cfg.backboneColor,
 				"width": cfg.backboneThickness,
+				"visibility": cfg.drawBackbone? "visible" : "hidden",
 			}
 		}
 		

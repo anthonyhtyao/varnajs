@@ -38,6 +38,8 @@ export const Layouts = Object.freeze({
  * @property {int} backboneThickness - backbone thickness (default: 1)
  * @property {string} bpColor - basepair color (default: blue)
  * @property {int} bpThickness - basepair thickness (default: 1)
+ * @property {bool} drawBases - base visibility (default: true)
+ * @property {bool} drawBacbone - backbone visibility (default: true)
  * @property {Puzzler} puzzler - puzzler setting
  */
 export class VARNAConfig {
@@ -60,6 +62,9 @@ export class VARNAConfig {
 	bpColor = "blue";
 	bpThickness = 1;
 	
+	// Visibility 
+	drawBases = true;
+	drawBackbone = true;
 	// RNApuzzler config
 	puzzler = new Puzzler();
 	

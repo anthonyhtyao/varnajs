@@ -69,7 +69,8 @@
 					let vConfig = new varnajs.VARNAConfig({
 						layout: layout,
 						baseInnerColor: "red",
-						spaceBetweenBases: 3,
+						spaceBetweenBases: 1,
+						drawBackbone: false,
 					});
 					varnajs.drawRNA(ss, document.getElementById(layout), vConfig);
 				}
