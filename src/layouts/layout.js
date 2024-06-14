@@ -21,7 +21,11 @@ let drawBases = function(baseList, varnaCfg) {
 	let layout = varnaCfg.layout;
 	if (layoutNames.includes(layout)) {
 		console.log("hi");
-		return layouts[layout](baseList, varnaCfg);
+		let coords = layouts[layout](baseList, varnaCfg);
+		for (let i = 0; i < baseList.length; i++) {
+			baseList[i].setCoords(coords[i]);
+		}
+		return coords;
 	} else {
 		throw new Error("Invaled layout");
 	}

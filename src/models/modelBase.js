@@ -5,14 +5,20 @@
  * @constructor
  * @public
  * @property {int} ind - index of base in baseList
- * @property {int} realInd - real index of base to show
- * @property {int} partner - index of canonical bp partner, -1 means unpaired
+ * @property {int} baseNum - base number to show
+ * @property {string} c - Character (nucleobase) of base
+ * @property {ModelBase} partner - index of canonical bp partner, -1 means unpaired
+ * @property {bool|null} nested - true if basepair is nested
  */
 class ModelBase {
-	partner = -1;
-	constructor(ind, realInd) {
+	partner = null;
+	nested = null;
+	coords = {x: null, y: null};
+	center = {x: null, y: null};
+	constructor(ind, bn, label) {
 		this.ind = ind;
-		this.realInd = realInd;
+		this.realInd = bn;
+		this.c = label;
 	}
 
 	/**
@@ -25,6 +31,30 @@ class ModelBase {
 
 	getPartner() {
 		return this.partner;
+	}
+
+	getPartnerInd() {
+		if (this.partner === null) {
+			return -1;
+		}
+		return this.partner.ind;
+	}
+
+	setBaseNum(bn) {
+		this.realInd = bn;
+	}
+
+	getBaseNum(bn) {
+		return this.realInd;
+	}
+
+	setCoords(coords) {
+		this.coords.x = coords.x;
+		this.coords.y = coords.y;
+	}
+
+	getCoords(coords) {
+		return {x: this.coords.x, y: this.coords.y};
 	}
 }
 

@@ -25,7 +25,7 @@ export function drawTurtle(baseList, varnaCfg) {
     var ptable = [];
     ptable.push(baseList.length);
 	  for (let i = 0; i < baseList.length; i++) {
-      ptable.push(baseList[i].getPartner() + 1);
+      ptable.push(baseList[i].getPartnerInd() + 1);
 	  }
 
     const length = ptable[0];

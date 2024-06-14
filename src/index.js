@@ -10,9 +10,10 @@ import { VARNAConfig } from './models/config';
  */
 let drawRNA = function (dbn, container, varnaCfg) {
 	console.log(dbn);
-	let v = new Structure(dbn);
+	let v = Structure.fromDBN(dbn);
+	v.cfg = varnaCfg;
 
-	v.createCy(container, varnaCfg);
+	v.createCy(container);
 	return v;
 }
 

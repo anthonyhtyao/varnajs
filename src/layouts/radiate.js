@@ -36,7 +36,7 @@ let drawLoop = function(i, j, x, y, dirAngle, coords, centers, angles, baseList,
 	let MULTILOOP_DISTANCE = varnaCfg.backboneMultiLoop;
 	let straightBulges = true;
 	// BasePaired
-	if (baseList[i].getPartner() == j) {
+	if (baseList[i].getPartnerInd() == j) {
 		let normalAngle = Math.PI / 2.0;
 		centers[i] = {x: x, y: y};
 		centers[j] = {x: x, y: y};
@@ -52,7 +52,7 @@ let drawLoop = function(i, j, x, y, dirAngle, coords, centers, angles, baseList,
 		let helices = [];
 		let l;
 		while (k <= j) {
-			l = baseList[k].getPartner();
+			l = baseList[k].getPartnerInd();
 			if (l > k) {
 				basesMultiLoop.push(k);
 				basesMultiLoop.push(l);
@@ -99,8 +99,8 @@ let drawLoop = function(i, j, x, y, dirAngle, coords, centers, angles, baseList,
 		for (k = basesMultiLoop.length - 1; k >= 0; k--) {
 			l = basesMultiLoop[k];
 			centers[l] = mlCenter;
-			let isPaired = (baseList[l].getPartner() != -1);
-			let isPaired3 = isPaired && (baseList[l].getPartner() < l);
+			let isPaired = (baseList[l].getPartnerInd() != -1);
+			let isPaired3 = isPaired && (baseList[l].getPartnerInd() < l);
 			let isPaired5 = isPaired && !isPaired3;
 			if (isPaired3) {
 				if ((numHelices == 2) && straightBulges) {
@@ -148,7 +148,7 @@ let drawLoop = function(i, j, x, y, dirAngle, coords, centers, angles, baseList,
 		let m, n;
 		for (k = 0; k < helices.length; k++) {
 			m = helices[k];
-			n = baseList[m].getPartner();
+			n = baseList[m].getPartnerInd();
 			newAngle = (angles[m] + angles[n]) / 2.0;
 			drawLoop(m + 1, n - 1, (LOOP_DISTANCE * Math.cos(newAngle)) + (coords[m].x + coords[n].x) / 2.0, 
 						(LOOP_DISTANCE * Math.sin(newAngle))

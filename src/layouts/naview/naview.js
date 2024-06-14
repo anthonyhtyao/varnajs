@@ -11,7 +11,7 @@ let drawNAView = function(baseList, varnaCfg){
   let spaceBetweenBases = varnaCfg.spaceBetweenBases;
 
 	for(let i=0; i<baseList.length; i++){
-    pairTable.push(baseList[i].getPartner());
+    pairTable.push(baseList[i].getPartnerInd());
 	}
 	var naView = new NAView();
   // TODO: understand how exactly NAView draw
