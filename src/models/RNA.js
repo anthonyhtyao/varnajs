@@ -57,14 +57,17 @@ class Structure {
 			ptable = new Array(seq.length).fill(-1);
 		} else {
 			ptable = ptableFromDBN(dbn);
-			if (seq === null) {
-				seq = " ".repeat(ptable.length);
-			}
 		}
 		// Fill baseList
 		rna.baseList = new Array(ptable.length);
 		for (let i = 0; i < ptable.length; i++) {
-			rna.baseList[i] = new ModelBase(i, i+1, seq[i]);
+			let c = "";
+			try {
+				c = seq[i];
+			} catch (e) {
+				c = "";
+			}
+			rna.baseList[i] = new ModelBase(i, i+1, c);
 		}
 		// Fill basepair
 		for (let i = 0; i < ptable.length; i++) {
@@ -77,6 +80,7 @@ class Structure {
 				rna.addBPPK(i, j);
 			}
 		}
+		console.log(rna);
 		return rna;
 	}
 
@@ -98,7 +102,7 @@ class Structure {
 		let res = [];
 		for (let i = 0; i < this.baseList.length; ++i) {
 			let base = this.baseList[i];
-			let baseEl = {data: {id: base.ind}};
+			let baseEl = {data: {id: base.ind, label: base.c, num: base.realInd}};
 			baseEl['position'] = base.getCoords();
 			res.push(baseEl);
 		}
@@ -163,6 +167,16 @@ class Structure {
 
 		let elements = [...baseElLst, ...backboneElLst, ...cbpElLst];
 
+		let baseNameStyle = {
+    	"selector": "node[label]",
+    	"style": {
+      	"label": "data(label)",
+				"text-valign": "center",
+      	"text-halign": "center",
+				"color": cfg.baseNameColor,
+    	}
+  	}
+
 		let baseStyle = {
 			"selector": "node",
 			"style": {
@@ -197,6 +211,7 @@ class Structure {
 			cbpStyle["style"]["control-point-weight"] = 0.5;
 		}
 		styles.push(baseStyle);
+		styles.push(baseNameStyle);
 		styles.push(backboneStyle);
 		styles.push(cbpStyle);
 
@@ -211,6 +226,7 @@ class Structure {
 
 		var cy = cytoscape(cyDist);
 		this.cy = cy;
+		console.log(cy);
 	}
 }
 

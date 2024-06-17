@@ -8,9 +8,9 @@ import { VARNAConfig } from './models/config';
  * @param {Element} container - HTML element to draw RNA
  * @param {VARNAConfig} varnaCfg - VARNA configuration to draw
  */
-let drawRNA = function (dbn, container, varnaCfg) {
+let drawRNA = function (dbn, container, varnaCfg, seq=null) {
 	console.log(dbn);
-	let v = Structure.fromDBN(dbn);
+	let v = Structure.fromDBN(dbn, seq=seq);
 	v.cfg = varnaCfg;
 
 	v.createCy(container);

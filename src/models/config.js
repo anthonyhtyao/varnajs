@@ -31,6 +31,7 @@ export const Layouts = Object.freeze({
  * @property {int} bpDistance - distance between paired bases (length of canonical basepair)
  * @property {int} backboneLoop - backbone distance within a loop (radiate, turtle, puzzler)
  * @property {int} backboneMultiLoop - backbone distance within a multiloop for radiate layout
+ * @property {string} baseNameColor - color of base name, i.e. nucleotide (default: rgb(64, 64, 64))
  * @property {string} baseInnerColor - color to fill base (default: rgb(242, 242, 242))
  * @property {string} baseOutlineColor - color of base border (default: rgb(91, 91, 91))
  * @property {float} baseOutlineThickness - base border thickness (default: 1.5)
@@ -50,6 +51,8 @@ export class VARNAConfig {
 	backboneLoop = 40;
 	backboneMultiLoop = 35;
 	
+	// Base label
+	baseNameColor = "rgb(64, 64, 64)";
 	// Inner base
 	baseInnerColor = "rgb(242, 242, 242)";
 	// Base Outline
