@@ -35,6 +35,8 @@ export const Layouts = Object.freeze({
  * @property {string} baseInnerColor - color to fill base (default: rgb(242, 242, 242))
  * @property {string} baseOutlineColor - color of base border (default: rgb(91, 91, 91))
  * @property {float} baseOutlineThickness - base border thickness (default: 1.5)
+ * @property {string} baseNumColor - color of base number (default: rgb(64, 64, 64))
+ * @property {int} baseNumPeriod - base number period. Non positive value means hiding base number (default: 10)
  * @property {string} backboneColor - color of backbone (default: rgb(91, 91, 91))
  * @property {int} backboneThickness - backbone thickness (default: 1)
  * @property {string} bpColor - basepair color (default: blue)
@@ -58,6 +60,9 @@ export class VARNAConfig {
 	// Base Outline
 	baseOutlineColor = "rgb(91, 91, 91)";
 	baseOutlineThickness = 1.5;
+	// Base number
+	baseNumColor = "rgb(64, 64, 64)";
+	baseNumPeriod = 10;
 	// Backbone
 	backboneColor = "rgb(91, 91, 91)";
 	backboneThickness = 1;

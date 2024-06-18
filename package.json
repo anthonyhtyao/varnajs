@@ -29,6 +29,7 @@
   "homepage": "https://gitlab.com/htyao/varnajs#readme",
   "dependencies": {
     "cytoscape": "^3.29.2",
+    "cytoscape-html-label": "^1.1.7",
     "math-float64-signbit": "^1.0.0"
   },
   "devDependencies": {

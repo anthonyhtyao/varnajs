@@ -1,4 +1,6 @@
 import cytoscape from 'cytoscape';
+import htmlLabel from 'cytoscape-html-label';
+htmlLabel( cytoscape );
 
 import { ModelBase } from './modelBase';
 import { ModelBP } from './modelBP';
@@ -102,7 +104,11 @@ class Structure {
 		let res = [];
 		for (let i = 0; i < this.baseList.length; ++i) {
 			let base = this.baseList[i];
-			let baseEl = {data: {id: base.ind, label: base.c, num: base.realInd}};
+			let baseEl = {data: {id: base.ind, label: base.c, num: base.getBaseNum()}}
+			// Set class to baseNum for node to draw base number
+			if (isNumberDrawn(base, this.cfg.baseNumPeriod, this.baseList.length)) {
+				baseEl["classes"] = "baseNum";
+			}
 			baseEl['position'] = base.getCoords();
 			res.push(baseEl);
 		}
@@ -147,6 +153,27 @@ class Structure {
 		}
 		return res;
 	}
+
+	/*
+	 * Draw base number on cy
+	 */
+	drawBaseNum() {
+		let cy = this.cy;
+		let cfg = this.cfg;
+
+		cy.htmlLabel([{
+    	query: '.baseNum',
+      valign: "center",
+      halign: "left",
+      valignBox: "center",
+      halignBox: "left",
+      tpl: function(data) {
+				return `<p>${data.num}</p>`;
+      }
+    }]);
+	}
+	
+
 	/**
 	 *	Create cytoscape drawing
 	 *	@param {DOM element} container - where to draw cytoscape
@@ -226,9 +253,24 @@ class Structure {
 
 		var cy = cytoscape(cyDist);
 		this.cy = cy;
+
+		this.drawBaseNum();
 		console.log(cy);
 	}
 }
 
+/*
+ * Return true to show number of given base
+ *
+ * @param {ModelBase} mb - base in ModelBase
+ * @param {int} period - base number period
+ * @param {int} total - total base number
+ */
+function isNumberDrawn(mb, period, total) {
+	if (period <= 0) {
+		return false;
+	}
+	return (mb.ind == 0) || (mb.getBaseNum() % period == 0) || (mb.ind == total -1);
+}
 
 export {Structure};

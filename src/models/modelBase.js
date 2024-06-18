@@ -44,7 +44,7 @@ class ModelBase {
 		this.realInd = bn;
 	}
 
-	getBaseNum(bn) {
+	getBaseNum() {
 		return this.realInd;
 	}
 
