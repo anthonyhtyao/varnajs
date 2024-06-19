@@ -21,6 +21,16 @@ export const Layouts = Object.freeze({
 	PUZZLER:'puzzler'
 });
 
+/** Default base label color */
+export const BASE_NAME_COLOR_DEFAULT = "rgb(64, 64, 64)";
+/** Default inner base color */
+export const BASE_INNER_COLOR_DEFAULT = "rgb(242, 242, 242)";
+/** Default base outline color */
+export const BASE_OUTLINE_COLOR_DEFAULT = "rgb(91, 91, 91)";
+/** Default base outline thickness */
+export const BASE_OUTLINE_THICKNESS_DEFAULT = 1.5;
+/** Default base number color */
+export const BASE_NUMBER_COLOR_DEFAULT = "rgb(64, 64, 64)";
 
 /**
  * VARNAConfig defines the style of drawing
@@ -54,14 +64,14 @@ export class VARNAConfig {
 	backboneMultiLoop = 35;
 	
 	// Base label
-	baseNameColor = "rgb(64, 64, 64)";
+	baseNameColor = BASE_NAME_COLOR_DEFAULT;
 	// Inner base
-	baseInnerColor = "rgb(242, 242, 242)";
+	baseInnerColor = BASE_INNER_COLOR_DEFAULT;
 	// Base Outline
-	baseOutlineColor = "rgb(91, 91, 91)";
-	baseOutlineThickness = 1.5;
+	baseOutlineColor = BASE_OUTLINE_COLOR_DEFAULT;
+	baseOutlineThickness = BASE_OUTLINE_THICKNESS_DEFAULT;
 	// Base number
-	baseNumColor = "rgb(64, 64, 64)";
+	baseNumColor = BASE_NUMBER_COLOR_DEFAULT;
 	baseNumPeriod = 10;
 	// Backbone
 	backboneColor = "rgb(91, 91, 91)";

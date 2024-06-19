@@ -2,7 +2,7 @@ import cytoscape from 'cytoscape';
 import htmlLabel from 'cytoscape-html-label';
 htmlLabel( cytoscape );
 
-import { ModelBase } from './modelBase';
+import { ModelBase, ModelBaseStyle } from './modelBase';
 import { ModelBP } from './modelBP';
 import { drawBases } from '../layouts/layout';
 import { Layouts } from './config';
@@ -41,6 +41,7 @@ class Structure {
 	cfg;
 	baseList = [];
 	auxBPs = [];
+	baseStyleList = [];
 	constructor() {
 	}
 
@@ -97,7 +98,37 @@ class Structure {
 		basej.setPartner(basei);
 	}
 
-	/*
+	/**
+	 * Apply base style to given bases
+	 *
+	 * @param {ModelBaseStyle} style - base style to apply
+	 * @param {ModelBase|int}  bases - bases (could be either ModelBase object or the index in baseList) to apply on
+	 */
+	applyBasesStyle(style, ...bases) {
+		if (style instanceof ModelBaseStyle) {
+			// Set style index as its id
+			if (bases.length > 0) {
+				style.setId(this.baseStyleList.length);
+				this.baseStyleList.push(style);
+			}
+			for (let i = 0; i < bases.length; i++) {
+				let element = bases[i];
+				let base;
+				if (Number.isInteger(element)) {
+						base = this.baseList[element];
+				} else if (element instanceof ModelBase) {
+						base = element;
+				} else {
+						throw new Error(`${element} is not an instance of int nor ModelBase.`);
+				}
+				base.setStyle(style);
+			};
+		} else {
+			throw new Error("The style should be an instance of ModelBaseStyle.");
+		}
+	}
+
+	/**
 	 * Returns bases in cytoscape node element list
 	 */
 	basesToEl() {
@@ -105,9 +136,15 @@ class Structure {
 		for (let i = 0; i < this.baseList.length; ++i) {
 			let base = this.baseList[i];
 			let baseEl = {data: {id: base.ind, label: base.c, num: base.getBaseNum()}}
-			// Set class to baseNum for node to draw base number
+			baseEl['classes'] = [];
+			// Add baseNum class for node to draw base number
 			if (isNumberDrawn(base, this.cfg.baseNumPeriod, this.baseList.length)) {
-				baseEl["classes"] = "baseNum";
+				baseEl["classes"].push("baseNum");
+			}
+			// Add class for base style
+			if (base.style !== null) {
+				baseEl["classes"].push(`baseStyle${base.style.getId()}`);
+				baseEl["data"]["baseNumColor"] = base.style.baseNumColor;
 			}
 			baseEl['position'] = base.getCoords();
 			res.push(baseEl);
@@ -116,7 +153,7 @@ class Structure {
 	}
 
 	// TODO: implement discontinuity
-	/*
+	/**
 	 * Returns backbone in cytoscape edge element list with classes set to backbone
 	 */
 	backboneToEl() {
@@ -127,7 +164,7 @@ class Structure {
 		return res;
 	}
 
-	/*
+	/**
 	 * Returns canonical basepair in cytoscape edge element list with classes set to cbp
 	 */
 	cbpToEl() {
@@ -154,7 +191,34 @@ class Structure {
 		return res;
 	}
 
-	/*
+	// TODO: should we hard code all style in node element?	
+	/**
+	 * Returns base style in cytoscape style
+	 */
+	baseStyleToCy() {
+		let res = [];
+		this.baseStyleList.forEach((style) => {
+			// For base node
+			res.push({
+				"selector": `node.baseStyle${style.getId()}`,
+				"style": {
+					"background-color": style.baseInnerColor,
+					"border-width": style.baseOutlineThickness,
+					"border-color": style.baseOutlineColor,
+				},
+			});
+			// For base label
+			res.push({
+    		"selector": `node.baseStyle${style.getId()}[label]`,
+    		"style": {
+					"color": style.baseNameColor,
+				},
+			});
+		});
+		return res;
+	}
+
+	/**
 	 * Draw base number on cy
 	 */
 	drawBaseNum() {
@@ -168,7 +232,13 @@ class Structure {
       valignBox: "center",
       halignBox: "left",
       tpl: function(data) {
-				return `<p>${data.num}</p>`;
+				let color;
+				if (data.baseNumColor) {
+					color = data.baseNumColor;
+				} else {
+					color = cfg.baseNumColor;
+				}
+				return `<p style="color: ${color}">${data.num}</p>`;
       }
     }]);
 	}
@@ -241,7 +311,9 @@ class Structure {
 		styles.push(baseNameStyle);
 		styles.push(backboneStyle);
 		styles.push(cbpStyle);
+		styles.push(...this.baseStyleToCy());
 
+		
 		// Set layout (base position)
 		let layoutDict = {'name': 'preset'};
 		let cyDist = {
@@ -259,7 +331,7 @@ class Structure {
 	}
 }
 
-/*
+/**
  * Return true to show number of given base
  *
  * @param {ModelBase} mb - base in ModelBase
