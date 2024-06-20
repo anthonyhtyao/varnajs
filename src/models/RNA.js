@@ -163,6 +163,8 @@ class Structure {
 
 	/**
 	 * Apply base style to given bases
+	 * The function assigns a number (the order) to given ModelBaseStyle object
+	 * Bases will be grouped with class `basegroup${number}`
 	 *
 	 * @param {ModelBaseStyle} style - base style to apply
 	 * @param {ModelBase|int}  bases - bases (could be either ModelBase object or the index in baseList) to apply on
@@ -192,6 +194,15 @@ class Structure {
 	}
 
 	/**
+	 * Return bases to draw in cytoscape format
+	 */
+	basesToCy() {
+		let elements = this.basesToEl();
+		let styles = this.baseStyleToCy();
+		return {"el": elements, "style": styles};
+	}
+
+	/**
 	 * Returns bases in cytoscape node element list
 	 */
 	basesToEl() {
@@ -206,7 +217,7 @@ class Structure {
 			}
 			// Add class for base style
 			if (base.style !== null) {
-				baseEl["classes"].push(`baseStyle${base.style.getId()}`);
+				baseEl["classes"].push(`basegroup${base.style.getId()}`);
 				baseEl["data"]["baseNumColor"] = base.style.baseNumColor;
 			}
 			baseEl['position'] = base.getCoords();
@@ -270,29 +281,33 @@ class Structure {
 		return res;
 	}
 
-	// TODO: should we hard code all style in node element?	
+	// TODO: inculde draw flag
 	/**
 	 * Returns base style in cytoscape style
 	 */
 	baseStyleToCy() {
+		let cfg = this.cfg;
 		let res = [];
-		this.baseStyleList.forEach((style) => {
+		// Default style for all bases
+		let generalStyle = {
+			"selector": "node",
+			"style": {
+				"width": 20,
+				"height": 20,
+				"background-color": cfg.baseInnerColor,
+				"border-width": cfg.baseOutlineThickness,
+				"border-color": cfg.baseOutlineColor,
+				"visibility": cfg.drawBases ? "visible" : "hidden",
+			},
+		}
+		res.push(generalStyle);
+		// Specific base style
+		this.baseStyleList.forEach((basestyle) => {
+			let style = basestyle.toCyStyle();
 			// For base node
-			res.push({
-				"selector": `node.baseStyle${style.getId()}`,
-				"style": {
-					"background-color": style.baseInnerColor,
-					"border-width": style.baseOutlineThickness,
-					"border-color": style.baseOutlineColor,
-				},
-			});
+			res.push(style.node);
 			// For base label
-			res.push({
-    		"selector": `node.baseStyle${style.getId()}[label]`,
-    		"style": {
-					"color": style.baseNameColor,
-				},
-			});
+			res.push(style.label);
 		});
 		return res;
 	}
@@ -337,12 +352,12 @@ class Structure {
 		// } else if (layout == 'naview') {
 		// 	var coords = drawNAView(this.baseList);
 		// }
-		let baseElLst = this.basesToEl();
+		let basesCy = this.basesToCy();
 		let backboneElLst = this.backboneToEl();
 		let planarbpElLst = this.planarbpToEl();
 		let auxbpElLst = this.auxbpToEl();
 
-		let elements = [...baseElLst, ...backboneElLst, ...planarbpElLst, ...auxbpElLst];
+		let elements = [...basesCy.el, ...backboneElLst, ...planarbpElLst, ...auxbpElLst];
 
 		let baseNameStyle = {
     	"selector": "node[label]",
@@ -353,18 +368,6 @@ class Structure {
 				"color": cfg.baseNameColor,
     	}
   	}
-
-		let baseStyle = {
-			"selector": "node",
-			"style": {
-				"width": 20,
-				"height": 20,
-				"background-color": cfg.baseInnerColor,
-				"border-width": cfg.baseOutlineThickness,
-				"border-color": cfg.baseOutlineColor,
-				"visibility": cfg.drawBases ? "visible" : "hidden",
-			},
-		}
 
 		let backboneStyle = {
 			"selector": "edge.backbone",
@@ -387,11 +390,10 @@ class Structure {
 			cbpStyle["style"]["curve-style"] = "unbundled-bezier";
 			cbpStyle["style"]["control-point-weight"] = 0.5;
 		}
-		styles.push(baseStyle);
 		styles.push(baseNameStyle);
 		styles.push(backboneStyle);
 		styles.push(cbpStyle);
-		styles.push(...this.baseStyleToCy());
+		styles.push(...basesCy.style);
 
 		
 		// Set layout (base position)

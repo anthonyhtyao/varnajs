@@ -120,6 +120,30 @@ export class ModelBaseStyle {
 	getId() {
 		return this.id;
 	}
+
+	/**
+	 * Return in cytoscape style format
+	 */
+  toCyStyle() {
+		let style = {};
+		// For base node
+		style.node = {
+			"selector": `node.basegroup${this.getId()}`,
+			"style": {
+				"background-color": this.baseInnerColor,
+				"border-width": this.baseOutlineThickness,
+				"border-color": this.baseOutlineColor,
+			},
+		};
+		// For base label
+		style.label = {
+	  		"selector": `node.basegroup${this.getId()}[label]`,
+	  		"style": {
+				"color": this.baseNameColor,
+			},
+		};
+		return style;
+	}
 }
 
 
