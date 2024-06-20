@@ -25,8 +25,24 @@
         <option value="turtle">Turtle</option>
         <option value="puzzler">Puzzler</option>
     </select>
-    <button onclick="varnajs.drawRNA(document.getElementById('ss').value, document.getElementById('cy'), new varnajs.VARNAConfig({layout: document.getElementById('layout').value}), document.getElementById('seq').value)">Click me</button> 
+    <button onclick="draw()">Click me</button>
 
     <div id="cy"></div>
+		<script>
+			function draw() {
+        let ss = document.getElementById('ss').value, seq = document.getElementById('seq').value;
+        let layout = document.getElementById('layout').value;
+        let v = varnajs.Structure.fromDBN(ss, seq);
+        let config = new varnajs.VARNAConfig({layout: layout});
+	      let style = new varnajs.ModelBaseStyle({baseNumColor: "red", baseInnerColor: "green"});
+	      v.applyBasesStyle(style, 0, 1, 2);
+	      v.addBP(1, 5, {'color': 'red'});
+        if (ss.length > 259) {
+	        v.addBP(5, 259, {'color': 'green'});
+        }
+	      v.cfg = config;
+	      v.createCy(document.getElementById("cy"));
+			}
+		</script>
 	</body>
 </html>

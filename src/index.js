@@ -1,6 +1,5 @@
-import { Structure } from './models/RNA';
-import { VARNAConfig } from './models/config';
-import { ModelBaseStyle } from './models/modelBase';
+export * from "./models/index";
+import * as models from "./models/index";
 
 /**
  * Basic RNA draw function
@@ -9,17 +8,12 @@ import { ModelBaseStyle } from './models/modelBase';
  * @param {Element} container - HTML element to draw RNA
  * @param {VARNAConfig} varnaCfg - VARNA configuration to draw
  */
-let drawRNA = function (dbn, container, varnaCfg, seq=null) {
+export function drawRNA(dbn, container, varnaCfg, seq=null) {
 	console.log(dbn);
-	let v = Structure.fromDBN(dbn, seq=seq);
+	let v = models.Structure.fromDBN(dbn, seq=seq);
 	v.cfg = varnaCfg;
-	let style = new ModelBaseStyle({baseNumColor: "red", baseInnerColor: "green"});
-	v.applyBasesStyle(style, 0, 1, 2);
-	// v.addBP(1, 5, {'color': 'red'});
-	// v.addBP(5, 259, {'color': 'green'});
 	v.createCy(container);
 	console.log(v);
 	return v;
 }
 
-export {drawRNA, VARNAConfig};
