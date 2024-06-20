@@ -1,3 +1,4 @@
+import {BASEPAIR_COLOR_DEFAULT, BASEPAIR_THICKNESS_DEFAULT} from "./config";
 
 // Here we list all possible label in lower case for each edge
 const WatsonCrick_List = ['w', 'wc', 'watson'];
@@ -58,19 +59,52 @@ function parseStericity(label) {
 export class ModelBP {
   partner5;
 	partner3;
-	edge5;
-	edge3;
-	stericity;
-	style=null;
-	constructor (part5, part3, edge5=EDGE.WC, edge3=EDGE.WC, stericity=STERICITY.C) {
+	edge5 = EDGE.WC;
+	edge3 = EDGE.WC;
+	stericity = STERICITY.C;
+	// Flag to not put in planar layout
+	noplanar = false;
+	// Style
+	thickness = BASEPAIR_THICKNESS_DEFAULT;
+	color = BASEPAIR_COLOR_DEFAULT;
+	constructor (part5, part3, opt={}) {
 		this.partner5 = part5;
 		this.partner3 = part3;
-		this.edge5 = parseEdge(edge5);
-		this.edge3 = parseEdge(edge3);
-		this.stericity = parseStericity(stericity);
+		if ("edge5" in opt) {
+			this.edge5 = parseEdge(opt.edge5);
+		}
+		if ("edge3" in opt) {
+			this.edge3 = parseEdge(opt.edge3);
+		}
+		if ("stericity" in opt) {
+			this.stericity = parseStericity(opt.stericity);
+		}
+		if ("noplaner" in opt) {
+			this.noplansar = Boolean(opt.noplanar);
+		}
+		if ("thickness" in opt) {
+			this.thickness = parseFloat(opt.thickness);
+		}
+		if ("color" in opt) {
+			this.color = String(opt.color);
+		}
 	}
 
 	getType() {
 		return `${this.stericity}${this.edge5}${this.edge3}`;
+	}
+
+	/**
+	 * Return basepair as cytoscape edge element
+	 */
+	toCyElement() {
+		let el = {
+			"data": {"source": this.partner5.ind, "target": this.partner3.ind, "label": this.getType()},
+			"style": {
+				"line-color": this.color,
+				"width": this.thickness
+			}
+		}
+	return el;
 	}
 }

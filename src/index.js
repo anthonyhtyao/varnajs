@@ -15,7 +15,10 @@ let drawRNA = function (dbn, container, varnaCfg, seq=null) {
 	v.cfg = varnaCfg;
 	let style = new ModelBaseStyle({baseNumColor: "red", baseInnerColor: "green"});
 	v.applyBasesStyle(style, 0, 1, 2);
+	// v.addBP(1, 5, {'color': 'red'});
+	// v.addBP(5, 259, {'color': 'green'});
 	v.createCy(container);
+	console.log(v);
 	return v;
 }
 

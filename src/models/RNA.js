@@ -51,7 +51,7 @@ class Structure {
 	 * @param {string|null} dbn - secondary structure in dbn
 	 * @param {string|null} seq - RNA sequence
 	 */
-	static fromDBN(dbn=null, seq=null) {
+	static fromDBN(dbn, seq) {
 		let rna = new Structure();
 		let ptable;
 		if ((dbn === null) && (seq === null)) {
@@ -80,22 +80,85 @@ class Structure {
 			} else if (dbn[i] == '(') {
 				rna.addBPNow(i, j);
 			} else {
-				rna.addBPPK(i, j);
+				rna.addBPAux(i, j);
 			}
 		}
 		console.log(rna);
 		return rna;
 	}
 
-	addBPPK(i, j) {
-		let basei = this.baseList[i], basej = this.baseList[j];
-		this.auxBPs.push(new ModelBP(basei, basej));	
+	/*
+	 * Get BaseModel of base
+	 * Directly return if base is already an instance of BaseModel
+	 * @param {int|BaseModel} base - either index in baseList or BaseModel
+	 */
+	getBase(base) {
+		if (Number.isInteger(base)) {
+			if (base >= this.baseList.length) {
+			throw new Error(`${base} is larger than total amount of bases minus one`)
+			}
+			return this.baseList[base];
+		} else if (base instanceof ModelBase) {
+			return base;
+		} else {
+			throw new Error(`${base} is not an integer or an instance of ModelBase.`);
+		}
+	}
+	/**
+	 * Add additional basepair (i, j)
+	 * The function check whether (i, j) fit planar unless the flag noplanar is set
+	 *
+	 * @param {int|ModelBase} i - index of ModelBase object of i
+	 * @param {int|ModelBase} j - index of ModelBase object of j
+	 */
+	addBP(i, j, opt={}) {
+		let basei = this.getBase(i), basej = this.getBase(j);
+		// Create ModelBP object for basepair
+		let mbp = new ModelBP(basei, basej, opt);
+		let indi, indj;
+		[indi, indj] = [Math.min(basei.ind, basej.ind), Math.max(basei.ind, basej.ind)]
+		// Add directly to aux
+		if (mbp.noplanar) {
+			this.addBPAux(basei, basej, mbp);
+			return;
+		} else {
+			// Here, we test if basepair (i, j) fit to planar
+			for (let indk = indi; indk <= indj; indk++) {
+				let tmp = this.baseList[indk];
+				let indl = tmp.getPartnerInd();
+				if (indl != -1) {
+					if ((indl <= indi) || (indl >= indj)) {
+						// Violate planar
+						console.log(`Violate planar: (${indi}, ${indj})`);
+						this.addBPAux(basei, basej, mbp);
+						return;
+					}
+				}
+			}
+			this.addBPNow(basei, basej, mbp);
+		}
 	}
 
-	addBPNow(i, j) {
-		let basei = this.baseList[i], basej = this.baseList[j];
-		basei.setPartner(basej);
-		basej.setPartner(basei);
+	/**
+	 * Add aux basepair (i, j)
+	 * @param {int|ModelBase} i - 
+	 */
+	addBPAux(i, j, mbp=null) {
+		let basei = this.getBase(i), basej = this.getBase(j);
+		if (mbp === null) {
+			mbp = new ModelBP(basei, basej);
+		}
+		this.auxBPs.push(mbp);
+	}
+
+
+	addBPNow(i, j, mbp=null) {
+		let basei = this.getBase(i), basej = this.getBase(j);
+		if (mbp === null) {
+			mbp = new ModelBP(basei, basej);
+		}
+		basei.setBP(mbp);
+		basej.setBP(mbp);
 	}
 
 	/**
@@ -165,27 +228,43 @@ class Structure {
 	}
 
 	/**
-	 * Returns canonical basepair in cytoscape edge element list with classes set to cbp
+	 * Returns planar basepair in cytoscape edge element list with classes set to basepair and planarbp
 	 */
-	cbpToEl() {
+	planarbpToEl() {
 		let cfg = this.cfg;
 		let res = [];
 		// Nested bp
 		for (const base of this.baseList) {
 			let j = base.getPartnerInd();
 			if (j > base.ind) {
-				let edgeEl = {"data": {"id": "cbp"+base.ind, "source": base.ind, "target": j}, "classes": "cbp"};
+				let bp = base.getBP();
+				let edgeEl = bp.toCyElement();
+				edgeEl.data.id = `planarbp${base.ind}`;
+				edgeEl.classes = ["basepair", "planarbp"];
 				if (cfg.layout == Layouts.LINE) {
-					edgeEl["style"] = {"control-point-distance": -(j-base.ind)*20};
+					edgeEl.style["control-point-distance"] = -(bp.partner3.ind-bp.partner5.ind)*20;
 				}
 				res.push(edgeEl);
 			}
 		}
-		for (const bp of this.auxBPs) {
-			let edgeEl = {"data": {"id": "cbp"+bp.partner5.ind, "source": bp.partner5.ind, "target": bp.partner3.ind}, "classes": "cbp"};
+		return res;
+	}
+
+	/**
+	 * Returns aux basepair in cytoscape edge element list with classes set to basepair and auxbp
+	 */
+	auxbpToEl() {
+		let cfg = this.cfg;
+		let res = [];
+		for (let i = 0; i < this.auxBPs.length; i++) {
+			let bp = this.auxBPs[i];
+			let edgeEl = bp.toCyElement();
+			edgeEl.data.id = `auxbp${i}`;
+			edgeEl.classes = ["basepair", "auxbp"];
 			if (cfg.layout == Layouts.LINE) {
-				edgeEl["style"] = {"control-point-distance": -(bp.partner3.ind-bp.partner5.ind)*20};
+				edgeEl.style["control-point-distance"] = -(bp.partner3.ind-bp.partner5.ind)*20;
 			}
+			console.log(edgeEl);
 			res.push(edgeEl);
 		}
 		return res;
@@ -260,9 +339,10 @@ class Structure {
 		// }
 		let baseElLst = this.basesToEl();
 		let backboneElLst = this.backboneToEl();
-		let cbpElLst = this.cbpToEl();
+		let planarbpElLst = this.planarbpToEl();
+		let auxbpElLst = this.auxbpToEl();
 
-		let elements = [...baseElLst, ...backboneElLst, ...cbpElLst];
+		let elements = [...baseElLst, ...backboneElLst, ...planarbpElLst, ...auxbpElLst];
 
 		let baseNameStyle = {
     	"selector": "node[label]",
@@ -296,7 +376,7 @@ class Structure {
 		}
 		
 		let cbpStyle = {
-			"selector": "edge.cbp",
+			"selector": "edge.basepair",
 			"style": {
 				"line-color": cfg.bpColor,
 				"width": cfg.bpThickness,

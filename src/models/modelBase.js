@@ -1,4 +1,5 @@
 import * as config from './config';
+import { ModelBP } from './modelBP';
 
 /**
  * ModelBase represents one base in RNA
@@ -12,7 +13,7 @@ import * as config from './config';
  * @property {bool|null} nested - true if basepair is nested
  */
 export class ModelBase {
-	partner = null;
+	bp = null;
 	nested = null;
 	coords = {x: null, y: null};
 	center = {x: null, y: null};
@@ -24,22 +25,35 @@ export class ModelBase {
 	}
 
 	/**
-	 * Set canonical bp partner of base
-	 * @param {int} partner - index of partner
+	 * Set planar basepair
+	 * @param {ModelBP} mbp - planar basepair
 	 */
-	setPartner(partner) {
-		this.partner = partner;
+	setBP(mbp) {
+		this.bp= mbp;
+	}
+
+	getBP(mbp) {
+		return this.bp;
 	}
 
 	getPartner() {
-		return this.partner;
+		if (this.bp === null) {
+			return null;
+		} else {
+			if (this.bp.partner5 == this) {
+				return this.bp.partner3.ind;
+			} else {
+				return this.bp.partner5.ind;
+			}
+		}
 	}
 
 	getPartnerInd() {
-		if (this.partner === null) {
+		let ind = this.getPartner();
+		if (ind === null) {
 			return -1;
 		}
-		return this.partner.ind;
+		return ind;
 	}
 
 	setBaseNum(bn) {

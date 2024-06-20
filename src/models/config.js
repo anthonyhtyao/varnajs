@@ -31,6 +31,10 @@ export const BASE_OUTLINE_COLOR_DEFAULT = "rgb(91, 91, 91)";
 export const BASE_OUTLINE_THICKNESS_DEFAULT = 1.5;
 /** Default base number color */
 export const BASE_NUMBER_COLOR_DEFAULT = "rgb(64, 64, 64)";
+/** Default basepair color */
+export const BASEPAIR_COLOR_DEFAULT = "blue";
+/** Default basepair thickness */
+export const BASEPAIR_THICKNESS_DEFAULT = 1;
 
 /**
  * VARNAConfig defines the style of drawing
@@ -77,8 +81,8 @@ export class VARNAConfig {
 	backboneColor = "rgb(91, 91, 91)";
 	backboneThickness = 1;
 	// (Canonical) basepair
-	bpColor = "blue";
-	bpThickness = 1;
+	bpColor = BASEPAIR_COLOR_DEFAULT;
+	bpThickness = BASEPAIR_THICKNESS_DEFAULT;
 	
 	// Visibility 
 	drawBases = true;
