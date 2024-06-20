@@ -193,19 +193,23 @@ class Structure {
 		}
 	}
 
+	/***************/
+	/*    Bases    */
+	/***************/
+
 	/**
 	 * Return bases to draw in cytoscape format
 	 */
-	basesToCy() {
-		let elements = this.basesToEl();
-		let styles = this.baseStyleToCy();
+	cyOfBases() {
+		let elements = this.elOfBases();
+		let styles = this.styleOfBases();
 		return {"el": elements, "style": styles};
 	}
 
 	/**
 	 * Returns bases in cytoscape node element list
 	 */
-	basesToEl() {
+	elOfBases() {
 		let res = [];
 		for (let i = 0; i < this.baseList.length; ++i) {
 			let base = this.baseList[i];
@@ -226,15 +230,76 @@ class Structure {
 		return res;
 	}
 
+	/**
+	 * Returns base style in cytoscape style
+	 */
+	styleOfBases() {
+		let cfg = this.cfg;
+		let res = [];
+		// Default style for all bases
+		let generalStyle = {
+			"selector": "node",
+			"style": {
+				"width": 20,
+				"height": 20,
+				"background-color": cfg.baseInnerColor,
+				"border-width": cfg.baseOutlineThickness,
+				"border-color": cfg.baseOutlineColor,
+				"visibility": cfg.drawBases ? "visible" : "hidden",
+			},
+		}
+		res.push(generalStyle);
+		// Specific base style
+		this.baseStyleList.forEach((basestyle) => {
+			let style = basestyle.toCyStyle();
+			// For base node
+			res.push(style.node);
+			// For base label
+			res.push(style.label);
+		});
+		return res;
+	}
+
+	/***************/
+	/*  Backbone   */
+	/***************/
+
+	/**
+	 * Return backbones to draw in cytoscape format
+	 */
+	cyOfBackbones() {
+		let elements = this.elOfBackbones();
+		let styles = this.styleOfBackbones();
+		return {"el": elements, "style": styles};
+	}
+
 	// TODO: implement discontinuity
 	/**
 	 * Returns backbone in cytoscape edge element list with classes set to backbone
 	 */
-	backboneToEl() {
+	elOfBackbones() {
 		let res = [];
 		for (let i = 0; i < this.baseList.length - 1; ++i) {
-			res.push({data: {id: 'back'+i, source: i, target: i+1}, "classes": "backbone"});
+			res.push({data: {id: 'backbone'+i, source: i, target: i+1}, "classes": "backbone"});
 		}
+		return res;
+	}
+
+	/**
+	 * Return backbone style in cytoscape format
+	 */
+	styleOfBackbones() {
+		let cfg = this.cfg;
+		let res = [];
+		let generalStyle = {
+			"selector": "edge.backbone",
+			"style": {
+				"line-color": cfg.backboneColor,
+				"width": cfg.backboneThickness,
+				"visibility": cfg.drawBackbone? "visible" : "hidden",
+			}
+		}
+		res.push(generalStyle);
 		return res;
 	}
 
@@ -281,37 +346,6 @@ class Structure {
 		return res;
 	}
 
-	// TODO: inculde draw flag
-	/**
-	 * Returns base style in cytoscape style
-	 */
-	baseStyleToCy() {
-		let cfg = this.cfg;
-		let res = [];
-		// Default style for all bases
-		let generalStyle = {
-			"selector": "node",
-			"style": {
-				"width": 20,
-				"height": 20,
-				"background-color": cfg.baseInnerColor,
-				"border-width": cfg.baseOutlineThickness,
-				"border-color": cfg.baseOutlineColor,
-				"visibility": cfg.drawBases ? "visible" : "hidden",
-			},
-		}
-		res.push(generalStyle);
-		// Specific base style
-		this.baseStyleList.forEach((basestyle) => {
-			let style = basestyle.toCyStyle();
-			// For base node
-			res.push(style.node);
-			// For base label
-			res.push(style.label);
-		});
-		return res;
-	}
-
 	/**
 	 * Draw base number on cy
 	 */
@@ -352,12 +386,12 @@ class Structure {
 		// } else if (layout == 'naview') {
 		// 	var coords = drawNAView(this.baseList);
 		// }
-		let basesCy = this.basesToCy();
-		let backboneElLst = this.backboneToEl();
+		let basesCy = this.cyOfBases();
+		let backbonesCy = this.cyOfBackbones();
 		let planarbpElLst = this.planarbpToEl();
 		let auxbpElLst = this.auxbpToEl();
 
-		let elements = [...basesCy.el, ...backboneElLst, ...planarbpElLst, ...auxbpElLst];
+		let elements = [...basesCy.el, ...backbonesCy.el, ...planarbpElLst, ...auxbpElLst];
 
 		let baseNameStyle = {
     	"selector": "node[label]",
@@ -369,14 +403,6 @@ class Structure {
     	}
   	}
 
-		let backboneStyle = {
-			"selector": "edge.backbone",
-			"style": {
-				"line-color": cfg.backboneColor,
-				"width": cfg.backboneThickness,
-				"visibility": cfg.drawBackbone? "visible" : "hidden",
-			}
-		}
 		
 		let cbpStyle = {
 			"selector": "edge.basepair",
@@ -391,9 +417,8 @@ class Structure {
 			cbpStyle["style"]["control-point-weight"] = 0.5;
 		}
 		styles.push(baseNameStyle);
-		styles.push(backboneStyle);
 		styles.push(cbpStyle);
-		styles.push(...basesCy.style);
+		styles.push(...basesCy.style, ...backbonesCy.style);
 
 		
 		// Set layout (base position)
