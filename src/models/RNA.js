@@ -30,14 +30,14 @@ let parseDBN = function(dbn){
 };
 
 /**
- * Structure is a basic class for RNA
+ * Basic class to draw one RNA
  * @class
  * @constructor
  * @public
  * @property {cytoscape} cy - cytoscape drawing
  * @property {Array} baseList - Array of ModelBase
  */
-class Structure {
+export class RNA {
 	cy;
 	cfg;
 	baseList = [];
@@ -53,7 +53,7 @@ class Structure {
 	 * @param {string|null} seq - RNA sequence
 	 */
 	static fromDBN(dbn, seq) {
-		let rna = new Structure();
+		let rna = new this();
 		let ptable;
 		if ((dbn === null) && (seq === null)) {
 			throw new Error("At least one should be non-null!");
@@ -482,4 +482,3 @@ function isNumberDrawn(mb, period, total) {
 	return (mb.ind == 0) || (mb.getBaseNum() % period == 0) || (mb.ind == total -1);
 }
 
-export {Structure};

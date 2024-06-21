@@ -10,7 +10,7 @@ import * as models from "./models/index";
  */
 export function drawRNA(dbn, container, varnaCfg, seq=null) {
 	console.log(dbn);
-	let v = models.Structure.fromDBN(dbn, seq=seq);
+	let v = models.RNA.fromDBN(dbn, seq=seq);
 	v.cfg = varnaCfg;
 	v.createCy(container);
 	console.log(v);
