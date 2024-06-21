@@ -337,6 +337,9 @@ class Structure {
 				edgeEl.data.id = `planarbp${base.ind}`;
 				edgeEl.classes = ["basepair", "planarbp"];
 				if (cfg.layout == Layouts.LINE) {
+					if (_.isUndefined(edgeEl.style)) {
+						edgeEl.style = {};
+					}
 					edgeEl.style["control-point-distance"] = -(bp.partner3.ind-bp.partner5.ind)*20;
 				}
 				res.push(edgeEl);
@@ -357,6 +360,9 @@ class Structure {
 			edgeEl.data.id = `auxbp${i}`;
 			edgeEl.classes = ["basepair", "auxbp"];
 			if (cfg.layout == Layouts.LINE) {
+				if (_.isUndefined(edgeEl.style)) {
+					edgeEl.style = {};
+				}
 				edgeEl.style["control-point-distance"] = -(bp.partner3.ind-bp.partner5.ind)*20;
 			}
 			console.log(edgeEl);
@@ -366,7 +372,7 @@ class Structure {
 	}
 
 	/**
-	 * Return planar basepair style in cytoscape format
+	 * Return basepair style in cytoscape format
 	 */
 	styleOfBPs() {
 		let cfg = this.cfg;
@@ -377,6 +383,10 @@ class Structure {
 				"line-color": cfg.bpColor,
 				"width": cfg.bpThickness,
 			}
+		}
+		if (cfg.layout == Layouts.LINE) {
+			generalStyle.style["curve-style"] = "unbundled-bezier";
+			generalStyle.style["control-point-weight"] = 0.5;
 		}
 		res.push(generalStyle);
 		return res;
@@ -435,10 +445,6 @@ class Structure {
 
 		
 
-		if (cfg.layout == Layouts.LINE) {
-			cbpStyle["style"]["curve-style"] = "unbundled-bezier";
-			cbpStyle["style"]["control-point-weight"] = 0.5;
-		}
 		styles.push(baseNameStyle);
 		styles.push(...basesCy.style, ...backbonesCy.style, ...bpsCy.style);
 
