@@ -1,3 +1,4 @@
+import _ from "lodash";
 import cytoscape from 'cytoscape';
 import htmlLabel from 'cytoscape-html-label';
 htmlLabel( cytoscape );
@@ -253,9 +254,13 @@ class Structure {
 		this.baseStyleList.forEach((basestyle) => {
 			let style = basestyle.toCyStyle();
 			// For base node
-			res.push(style.node);
+			if (! _.isEmpty(style.node)) {
+				res.push(style.node);
+			}
 			// For base label
-			res.push(style.label);
+			if (! _.isEmpty(style.label)) {
+				res.push(style.label);
+			}
 		});
 		return res;
 	}
