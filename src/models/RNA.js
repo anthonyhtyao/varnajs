@@ -303,10 +303,24 @@ class Structure {
 		return res;
 	}
 
+	/***************/
+	/*     BPs     */
+	/***************/
+
+	/**
+	 * Return basepair to draw in cytoscape format
+	 */
+	cyOfBPs() {
+		let cfg = this.cfg;
+		let elements = [...this.elOfPlanarBPs(), ...this.elOfAuxBPs()];
+		let styles = this.styleOfBPs();
+		return {"el": elements, "style": styles};
+	}
+
 	/**
 	 * Returns planar basepair in cytoscape edge element list with classes set to basepair and planarbp
 	 */
-	planarbpToEl() {
+	elOfPlanarBPs() {
 		let cfg = this.cfg;
 		let res = [];
 		// Nested bp
@@ -329,7 +343,7 @@ class Structure {
 	/**
 	 * Returns aux basepair in cytoscape edge element list with classes set to basepair and auxbp
 	 */
-	auxbpToEl() {
+	elOfAuxBPs() {
 		let cfg = this.cfg;
 		let res = [];
 		for (let i = 0; i < this.auxBPs.length; i++) {
@@ -343,6 +357,23 @@ class Structure {
 			console.log(edgeEl);
 			res.push(edgeEl);
 		}
+		return res;
+	}
+
+	/**
+	 * Return planar basepair style in cytoscape format
+	 */
+	styleOfBPs() {
+		let cfg = this.cfg;
+		let res = [];
+		let generalStyle = {
+			"selector": "edge.basepair",
+			"style": {
+				"line-color": cfg.bpColor,
+				"width": cfg.bpThickness,
+			}
+		}
+		res.push(generalStyle);
 		return res;
 	}
 
@@ -381,17 +412,11 @@ class Structure {
 		let styles = [];
 		// Bases
 		var coords = drawBases(this.baseList, cfg);
-		// if (layout == 'radiate') {
-		// 	var coords = drawRadiate(this.baseList);
-		// } else if (layout == 'naview') {
-		// 	var coords = drawNAView(this.baseList);
-		// }
 		let basesCy = this.cyOfBases();
 		let backbonesCy = this.cyOfBackbones();
-		let planarbpElLst = this.planarbpToEl();
-		let auxbpElLst = this.auxbpToEl();
+		let bpsCy= this.cyOfBPs();
 
-		let elements = [...basesCy.el, ...backbonesCy.el, ...planarbpElLst, ...auxbpElLst];
+		let elements = [...basesCy.el, ...backbonesCy.el, ...bpsCy.el];
 
 		let baseNameStyle = {
     	"selector": "node[label]",
@@ -404,21 +429,13 @@ class Structure {
   	}
 
 		
-		let cbpStyle = {
-			"selector": "edge.basepair",
-			"style": {
-				"line-color": cfg.bpColor,
-				"width": cfg.bpThickness,
-			}
-		}
 
 		if (cfg.layout == Layouts.LINE) {
 			cbpStyle["style"]["curve-style"] = "unbundled-bezier";
 			cbpStyle["style"]["control-point-weight"] = 0.5;
 		}
 		styles.push(baseNameStyle);
-		styles.push(cbpStyle);
-		styles.push(...basesCy.style, ...backbonesCy.style);
+		styles.push(...basesCy.style, ...backbonesCy.style, ...bpsCy.style);
 
 		
 		// Set layout (base position)
