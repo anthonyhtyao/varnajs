@@ -236,7 +236,6 @@ class Structure {
 	 */
 	styleOfBases() {
 		let cfg = this.cfg;
-		let res = [];
 		// Default style for all bases
 		let generalStyle = {
 			"selector": "node",
@@ -249,7 +248,17 @@ class Structure {
 				"visibility": cfg.drawBases ? "visible" : "hidden",
 			},
 		}
-		res.push(generalStyle);
+		// Default style for base label
+		let baseNameStyle = {
+    	"selector": "node[label]",
+    	"style": {
+      	"label": "data(label)",
+				"text-valign": "center",
+      	"text-halign": "center",
+				"color": cfg.baseNameColor,
+    	}
+  	}
+		let res = [generalStyle, baseNameStyle];
 		// Specific base style
 		this.baseStyleList.forEach((basestyle) => {
 			let style = basestyle.toCyStyle();
@@ -263,6 +272,34 @@ class Structure {
 			}
 		});
 		return res;
+	}
+
+	/***************/
+	/* Base Number */
+	/***************/
+
+	/**
+	 * Return base number to draw in cytoscape format
+	 */
+	cyOfBaseNum() {
+		let cfg = this.cfg;
+
+		return [{
+    	query: '.baseNum',
+      valign: "center",
+      halign: "left",
+      valignBox: "center",
+      halignBox: "left",
+      tpl: function(data) {
+				let color;
+				if (data.baseNumColor) {
+					color = data.baseNumColor;
+				} else {
+					color = cfg.baseNumColor;
+				}
+				return `<p style="color: ${color}">${data.num}</p>`;
+      }
+    }];
 	}
 
 	/***************/
@@ -392,30 +429,6 @@ class Structure {
 		return res;
 	}
 
-	/**
-	 * Draw base number on cy
-	 */
-	drawBaseNum() {
-		let cy = this.cy;
-		let cfg = this.cfg;
-
-		cy.htmlLabel([{
-    	query: '.baseNum',
-      valign: "center",
-      halign: "left",
-      valignBox: "center",
-      halignBox: "left",
-      tpl: function(data) {
-				let color;
-				if (data.baseNumColor) {
-					color = data.baseNumColor;
-				} else {
-					color = cfg.baseNumColor;
-				}
-				return `<p style="color: ${color}">${data.num}</p>`;
-      }
-    }]);
-	}
 	
 
 	/**
@@ -424,30 +437,14 @@ class Structure {
 	 */
 	createCy(container) {
 		let cfg = this.cfg;
-		let styles = [];
-		// Bases
 		var coords = drawBases(this.baseList, cfg);
+
 		let basesCy = this.cyOfBases();
 		let backbonesCy = this.cyOfBackbones();
 		let bpsCy= this.cyOfBPs();
 
 		let elements = [...basesCy.el, ...backbonesCy.el, ...bpsCy.el];
-
-		let baseNameStyle = {
-    	"selector": "node[label]",
-    	"style": {
-      	"label": "data(label)",
-				"text-valign": "center",
-      	"text-halign": "center",
-				"color": cfg.baseNameColor,
-    	}
-  	}
-
-		
-
-		styles.push(baseNameStyle);
-		styles.push(...basesCy.style, ...backbonesCy.style, ...bpsCy.style);
-
+		let styles = [...basesCy.style, ...backbonesCy.style, ...bpsCy.style];
 		
 		// Set layout (base position)
 		let layoutDict = {'name': 'preset'};
@@ -461,7 +458,12 @@ class Structure {
 		var cy = cytoscape(cyDist);
 		this.cy = cy;
 
-		this.drawBaseNum();
+		// HTML label
+		let baseNumLabel = this.cyOfBaseNum();
+		let htmlLabel = [...baseNumLabel];
+		if (htmlLabel.length != 0) {
+			cy.htmlLabel([...baseNumLabel]);
+		}
 		console.log(cy);
 	}
 }

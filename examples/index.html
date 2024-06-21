@@ -33,7 +33,7 @@
         let ss = document.getElementById('ss').value, seq = document.getElementById('seq').value;
         let layout = document.getElementById('layout').value;
         let v = varnajs.Structure.fromDBN(ss, seq);
-        let config = new varnajs.VARNAConfig({layout: layout, bpColor: 'orange', baseOutlineColor: 'blue'});
+        let config = new varnajs.VARNAConfig({layout: layout, baseNameColor: 'orange', baseNumPeriod: 0});
 	      let style = new varnajs.ModelBaseStyle({baseNumColor: "red", baseInnerColor: "green"});
 	      v.applyBasesStyle(style, 0, 1, 2);
 	      v.addBP(1, 5, {'color': 'red'});
