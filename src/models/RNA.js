@@ -1,3 +1,4 @@
+import _ from "lodash";
 import cytoscape from 'cytoscape';
 import htmlLabel from 'cytoscape-html-label';
 htmlLabel( cytoscape );
@@ -163,6 +164,8 @@ class Structure {
 
 	/**
 	 * Apply base style to given bases
+	 * The function assigns a number (the order) to given ModelBaseStyle object
+	 * Bases will be grouped with class `basegroup${number}`
 	 *
 	 * @param {ModelBaseStyle} style - base style to apply
 	 * @param {ModelBase|int}  bases - bases (could be either ModelBase object or the index in baseList) to apply on
@@ -191,10 +194,23 @@ class Structure {
 		}
 	}
 
+	/***************/
+	/*    Bases    */
+	/***************/
+
+	/**
+	 * Return bases to draw in cytoscape format
+	 */
+	cyOfBases() {
+		let elements = this.elOfBases();
+		let styles = this.styleOfBases();
+		return {"el": elements, "style": styles};
+	}
+
 	/**
 	 * Returns bases in cytoscape node element list
 	 */
-	basesToEl() {
+	elOfBases() {
 		let res = [];
 		for (let i = 0; i < this.baseList.length; ++i) {
 			let base = this.baseList[i];
@@ -206,7 +222,7 @@ class Structure {
 			}
 			// Add class for base style
 			if (base.style !== null) {
-				baseEl["classes"].push(`baseStyle${base.style.getId()}`);
+				baseEl["classes"].push(`basegroup${base.style.getId()}`);
 				baseEl["data"]["baseNumColor"] = base.style.baseNumColor;
 			}
 			baseEl['position'] = base.getCoords();
@@ -215,96 +231,60 @@ class Structure {
 		return res;
 	}
 
-	// TODO: implement discontinuity
-	/**
-	 * Returns backbone in cytoscape edge element list with classes set to backbone
-	 */
-	backboneToEl() {
-		let res = [];
-		for (let i = 0; i < this.baseList.length - 1; ++i) {
-			res.push({data: {id: 'back'+i, source: i, target: i+1}, "classes": "backbone"});
-		}
-		return res;
-	}
-
-	/**
-	 * Returns planar basepair in cytoscape edge element list with classes set to basepair and planarbp
-	 */
-	planarbpToEl() {
-		let cfg = this.cfg;
-		let res = [];
-		// Nested bp
-		for (const base of this.baseList) {
-			let j = base.getPartnerInd();
-			if (j > base.ind) {
-				let bp = base.getBP();
-				let edgeEl = bp.toCyElement();
-				edgeEl.data.id = `planarbp${base.ind}`;
-				edgeEl.classes = ["basepair", "planarbp"];
-				if (cfg.layout == Layouts.LINE) {
-					edgeEl.style["control-point-distance"] = -(bp.partner3.ind-bp.partner5.ind)*20;
-				}
-				res.push(edgeEl);
-			}
-		}
-		return res;
-	}
-
-	/**
-	 * Returns aux basepair in cytoscape edge element list with classes set to basepair and auxbp
-	 */
-	auxbpToEl() {
-		let cfg = this.cfg;
-		let res = [];
-		for (let i = 0; i < this.auxBPs.length; i++) {
-			let bp = this.auxBPs[i];
-			let edgeEl = bp.toCyElement();
-			edgeEl.data.id = `auxbp${i}`;
-			edgeEl.classes = ["basepair", "auxbp"];
-			if (cfg.layout == Layouts.LINE) {
-				edgeEl.style["control-point-distance"] = -(bp.partner3.ind-bp.partner5.ind)*20;
-			}
-			console.log(edgeEl);
-			res.push(edgeEl);
-		}
-		return res;
-	}
-
-	// TODO: should we hard code all style in node element?	
 	/**
 	 * Returns base style in cytoscape style
 	 */
-	baseStyleToCy() {
-		let res = [];
-		this.baseStyleList.forEach((style) => {
+	styleOfBases() {
+		let cfg = this.cfg;
+		// Default style for all bases
+		let generalStyle = {
+			"selector": "node",
+			"style": {
+				"width": 20,
+				"height": 20,
+				"background-color": cfg.baseInnerColor,
+				"border-width": cfg.baseOutlineThickness,
+				"border-color": cfg.baseOutlineColor,
+				"visibility": cfg.drawBases ? "visible" : "hidden",
+			},
+		}
+		// Default style for base label
+		let baseNameStyle = {
+    	"selector": "node[label]",
+    	"style": {
+      	"label": "data(label)",
+				"text-valign": "center",
+      	"text-halign": "center",
+				"color": cfg.baseNameColor,
+    	}
+  	}
+		let res = [generalStyle, baseNameStyle];
+		// Specific base style
+		this.baseStyleList.forEach((basestyle) => {
+			let style = basestyle.toCyStyle();
 			// For base node
-			res.push({
-				"selector": `node.baseStyle${style.getId()}`,
-				"style": {
-					"background-color": style.baseInnerColor,
-					"border-width": style.baseOutlineThickness,
-					"border-color": style.baseOutlineColor,
-				},
-			});
+			if (! _.isEmpty(style.node)) {
+				res.push(style.node);
+			}
 			// For base label
-			res.push({
-    		"selector": `node.baseStyle${style.getId()}[label]`,
-    		"style": {
-					"color": style.baseNameColor,
-				},
-			});
+			if (! _.isEmpty(style.label)) {
+				res.push(style.label);
+			}
 		});
 		return res;
 	}
 
+	/***************/
+	/* Base Number */
+	/***************/
+
 	/**
-	 * Draw base number on cy
+	 * Return base number to draw in cytoscape format
 	 */
-	drawBaseNum() {
-		let cy = this.cy;
+	cyOfBaseNum() {
 		let cfg = this.cfg;
 
-		cy.htmlLabel([{
+		return [{
     	query: '.baseNum',
       valign: "center",
       halign: "left",
@@ -319,8 +299,136 @@ class Structure {
 				}
 				return `<p style="color: ${color}">${data.num}</p>`;
       }
-    }]);
+    }];
 	}
+
+	/***************/
+	/*  Backbone   */
+	/***************/
+
+	/**
+	 * Return backbones to draw in cytoscape format
+	 */
+	cyOfBackbones() {
+		let elements = this.elOfBackbones();
+		let styles = this.styleOfBackbones();
+		return {"el": elements, "style": styles};
+	}
+
+	// TODO: implement discontinuity
+	/**
+	 * Returns backbone in cytoscape edge element list with classes set to backbone
+	 */
+	elOfBackbones() {
+		let res = [];
+		for (let i = 0; i < this.baseList.length - 1; ++i) {
+			res.push({data: {id: 'backbone'+i, source: i, target: i+1}, "classes": "backbone"});
+		}
+		return res;
+	}
+
+	/**
+	 * Return backbone style in cytoscape format
+	 */
+	styleOfBackbones() {
+		let cfg = this.cfg;
+		let res = [];
+		let generalStyle = {
+			"selector": "edge.backbone",
+			"style": {
+				"line-color": cfg.backboneColor,
+				"width": cfg.backboneThickness,
+				"visibility": cfg.drawBackbone? "visible" : "hidden",
+			}
+		}
+		res.push(generalStyle);
+		return res;
+	}
+
+	/***************/
+	/*     BPs     */
+	/***************/
+
+	/**
+	 * Return basepair to draw in cytoscape format
+	 */
+	cyOfBPs() {
+		let cfg = this.cfg;
+		let elements = [...this.elOfPlanarBPs(), ...this.elOfAuxBPs()];
+		let styles = this.styleOfBPs();
+		return {"el": elements, "style": styles};
+	}
+
+	/**
+	 * Returns planar basepair in cytoscape edge element list with classes set to basepair and planarbp
+	 */
+	elOfPlanarBPs() {
+		let cfg = this.cfg;
+		let res = [];
+		// Nested bp
+		for (const base of this.baseList) {
+			let j = base.getPartnerInd();
+			if (j > base.ind) {
+				let bp = base.getBP();
+				let edgeEl = bp.toCyElement();
+				edgeEl.data.id = `planarbp${base.ind}`;
+				edgeEl.classes = ["basepair", "planarbp"];
+				if (cfg.layout == Layouts.LINE) {
+					if (_.isUndefined(edgeEl.style)) {
+						edgeEl.style = {};
+					}
+					edgeEl.style["control-point-distance"] = -(bp.partner3.ind-bp.partner5.ind)*20;
+				}
+				res.push(edgeEl);
+			}
+		}
+		return res;
+	}
+
+	/**
+	 * Returns aux basepair in cytoscape edge element list with classes set to basepair and auxbp
+	 */
+	elOfAuxBPs() {
+		let cfg = this.cfg;
+		let res = [];
+		for (let i = 0; i < this.auxBPs.length; i++) {
+			let bp = this.auxBPs[i];
+			let edgeEl = bp.toCyElement();
+			edgeEl.data.id = `auxbp${i}`;
+			edgeEl.classes = ["basepair", "auxbp"];
+			if (cfg.layout == Layouts.LINE) {
+				if (_.isUndefined(edgeEl.style)) {
+					edgeEl.style = {};
+				}
+				edgeEl.style["control-point-distance"] = -(bp.partner3.ind-bp.partner5.ind)*20;
+			}
+			console.log(edgeEl);
+			res.push(edgeEl);
+		}
+		return res;
+	}
+
+	/**
+	 * Return basepair style in cytoscape format
+	 */
+	styleOfBPs() {
+		let cfg = this.cfg;
+		let res = [];
+		let generalStyle = {
+			"selector": "edge.basepair",
+			"style": {
+				"line-color": cfg.bpColor,
+				"width": cfg.bpThickness,
+			}
+		}
+		if (cfg.layout == Layouts.LINE) {
+			generalStyle.style["curve-style"] = "unbundled-bezier";
+			generalStyle.style["control-point-weight"] = 0.5;
+		}
+		res.push(generalStyle);
+		return res;
+	}
+
 	
 
 	/**
@@ -329,70 +437,14 @@ class Structure {
 	 */
 	createCy(container) {
 		let cfg = this.cfg;
-		let styles = [];
-		// Bases
 		var coords = drawBases(this.baseList, cfg);
-		// if (layout == 'radiate') {
-		// 	var coords = drawRadiate(this.baseList);
-		// } else if (layout == 'naview') {
-		// 	var coords = drawNAView(this.baseList);
-		// }
-		let baseElLst = this.basesToEl();
-		let backboneElLst = this.backboneToEl();
-		let planarbpElLst = this.planarbpToEl();
-		let auxbpElLst = this.auxbpToEl();
 
-		let elements = [...baseElLst, ...backboneElLst, ...planarbpElLst, ...auxbpElLst];
+		let basesCy = this.cyOfBases();
+		let backbonesCy = this.cyOfBackbones();
+		let bpsCy= this.cyOfBPs();
 
-		let baseNameStyle = {
-    	"selector": "node[label]",
-    	"style": {
-      	"label": "data(label)",
-				"text-valign": "center",
-      	"text-halign": "center",
-				"color": cfg.baseNameColor,
-    	}
-  	}
-
-		let baseStyle = {
-			"selector": "node",
-			"style": {
-				"width": 20,
-				"height": 20,
-				"background-color": cfg.baseInnerColor,
-				"border-width": cfg.baseOutlineThickness,
-				"border-color": cfg.baseOutlineColor,
-				"visibility": cfg.drawBases ? "visible" : "hidden",
-			},
-		}
-
-		let backboneStyle = {
-			"selector": "edge.backbone",
-			"style": {
-				"line-color": cfg.backboneColor,
-				"width": cfg.backboneThickness,
-				"visibility": cfg.drawBackbone? "visible" : "hidden",
-			}
-		}
-		
-		let cbpStyle = {
-			"selector": "edge.basepair",
-			"style": {
-				"line-color": cfg.bpColor,
-				"width": cfg.bpThickness,
-			}
-		}
-
-		if (cfg.layout == Layouts.LINE) {
-			cbpStyle["style"]["curve-style"] = "unbundled-bezier";
-			cbpStyle["style"]["control-point-weight"] = 0.5;
-		}
-		styles.push(baseStyle);
-		styles.push(baseNameStyle);
-		styles.push(backboneStyle);
-		styles.push(cbpStyle);
-		styles.push(...this.baseStyleToCy());
-
+		let elements = [...basesCy.el, ...backbonesCy.el, ...bpsCy.el];
+		let styles = [...basesCy.style, ...backbonesCy.style, ...bpsCy.style];
 		
 		// Set layout (base position)
 		let layoutDict = {'name': 'preset'};
@@ -406,7 +458,12 @@ class Structure {
 		var cy = cytoscape(cyDist);
 		this.cy = cy;
 
-		this.drawBaseNum();
+		// HTML label
+		let baseNumLabel = this.cyOfBaseNum();
+		let htmlLabel = [...baseNumLabel];
+		if (htmlLabel.length != 0) {
+			cy.htmlLabel([...baseNumLabel]);
+		}
 		console.log(cy);
 	}
 }

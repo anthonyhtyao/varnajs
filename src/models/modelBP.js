@@ -1,4 +1,5 @@
-import {BASEPAIR_COLOR_DEFAULT, BASEPAIR_THICKNESS_DEFAULT} from "./config";
+// import {BASEPAIR_COLOR_DEFAULT, BASEPAIR_THICKNESS_DEFAULT} from "./config";
+import _ from "lodash";
 
 // Here we list all possible label in lower case for each edge
 const WatsonCrick_List = ['w', 'wc', 'watson'];
@@ -65,8 +66,10 @@ export class ModelBP {
 	// Flag to not put in planar layout
 	noplanar = false;
 	// Style
-	thickness = BASEPAIR_THICKNESS_DEFAULT;
-	color = BASEPAIR_COLOR_DEFAULT;
+	// thickness = BASEPAIR_THICKNESS_DEFAULT;
+	// color = BASEPAIR_COLOR_DEFAULT;
+	thickness = null;
+	color = null;
 	constructor (part5, part3, opt={}) {
 		this.partner5 = part5;
 		this.partner3 = part3;
@@ -99,11 +102,17 @@ export class ModelBP {
 	 */
 	toCyElement() {
 		let el = {
-			"data": {"source": this.partner5.ind, "target": this.partner3.ind, "label": this.getType()},
-			"style": {
-				"line-color": this.color,
-				"width": this.thickness
-			}
+			"data": {"source": this.partner5.ind, "target": this.partner3.ind, "label": this.getType()}};
+		let style = {};
+		if (this.color !== null) {
+			style["line-color"] = this.color;
+		}
+		if (this.thickness !== null) {
+			style.width = this.thickness;
+		}
+
+		if (! _.isEmpty(style)) {
+			el.style = style;
 		}
 	return el;
 	}

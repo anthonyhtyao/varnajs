@@ -1,4 +1,5 @@
-import * as config from './config';
+import _ from "lodash";
+
 import { ModelBP } from './modelBP';
 
 /**
@@ -97,11 +98,11 @@ export class ModelBase {
  */
 export class ModelBaseStyle {
 	id = null;
-	baseNameColor = config.BASE_NAME_COLOR_DEFAULT;
-	baseInnerColor = config.BASE_INNER_COLOR_DEFAULT;
-	baseOutlineColor = config.BASE_OUTLINE_COLOR_DEFAULT;
-	baseOutlineThickness = config.BASE_OUTLINE_THICKNESS_DEFAULT;
-	baseNumColor = config.BASE_NUMBER_COLOR_DEFAULT;
+	baseNameColor = null;
+	baseInnerColor = null;
+	baseOutlineColor = null;
+	baseOutlineThickness = null;
+	baseNumColor = null;
 
 	constructor(opt={}) {
 		Object.assign(this, opt);
@@ -119,6 +120,41 @@ export class ModelBaseStyle {
 	 */
 	getId() {
 		return this.id;
+	}
+
+	/**
+	 * Return in cytoscape style format
+	 */
+  toCyStyle() {
+		let style = {node: {}, label: {}};
+		// For base node
+		let tmp = {};
+		if (this.baseInnerColor !== null) {
+		  tmp["background-color"] = this.baseInnerColor;
+		}
+		if (this.baseOutlineThickness !== null) {
+			tmp["border-width"] = this.baseOutlineThickness;
+		}
+		if (this.baseOutlineColor !== null) {
+			tmp["border-color"] = this.baseOutlineColor;
+		}
+		if (! _.isEmpty(tmp)) {
+			style.node = {
+				"selector": `node.basegroup${this.getId()}`,
+				"style": tmp,
+			}
+		}
+		
+		// For base label
+		if (this.baseNameColor !== null) {
+			style.label = {
+	  			"selector": `node.basegroup${this.getId()}[label]`,
+	  			"style": {
+					"color": this.baseNameColor,
+				},
+			};
+		}
+		return style;
 	}
 }
 
