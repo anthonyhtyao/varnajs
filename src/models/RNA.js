@@ -7,7 +7,9 @@ import { ModelBase, ModelBaseStyle } from './modelBase';
 import { ModelBP } from './modelBP';
 import { drawBases } from '../layouts/layout';
 import { Layouts } from './config';
-import { ptableFromDBN } from '../utils/RNA';
+import { ptableFromDBN, parseSeq} from '../utils/RNA';
+
+const DBNStrandSep = "&";
 
 /**
  * Simple dot-bracket notation parser
@@ -48,37 +50,56 @@ export class RNA {
 
 	// TODO: Refactor as VARNA
 	/**
-	 * Construct from given dbn and seq. At most one can be null
-	 * @param {string|null} dbn - secondary structure in dbn
-	 * @param {string|null} seq - RNA sequence
+	 * Construct from given dbn and seq. At most one can be empty
+	 * @param {string} dbn - secondary structure in dbn
+	 * @param {string} seq - RNA sequence
 	 */
 	static fromDBN(dbn, seq) {
-		let rna = new this();
-		let ptable;
-		if ((dbn === null) && (seq === null)) {
+		if ((dbn.length == 0) && (seq.length == 0)) {
 			throw new Error("At least one should be non-null!");
-		} else if (dbn === null) {
-			ptable = new Array(seq.length).fill(-1);
-		} else {
-			ptable = ptableFromDBN(dbn);
 		}
+		let rna = new this();
+		let seqTmp = (seq.length == 0)? [] : parseSeq(seq);
+		let sepPosLst = [];
+		let dbnFinal = ""
+		let seqFinal = [];
+		if (dbn.length == 0) {
+			dbnFinal = ".".repeat(seqTmp.length);
+			seqFinal = seqTmp;
+		} else {
+			// Parse strands if dbn is given
+			for (let i = 0; i < dbn.length; i++) {
+				let c = dbn[i];
+				if (c == DBNStrandSep && (seqTmp.length == 0 || seqTmp[i] == DBNStrandSep)) {
+					// Find separator at both dbn and seq, or seq is empty
+					sepPosLst.push(seqFinal.length - 1);
+				} else {
+					// Usual structural position, or separator unmatch
+					seqFinal.push((_.isUndefined(seqTmp[i])) ? "" : seqTmp[i]);
+					dbnFinal += c;
+				}
+			}
+			// Add unpaired bases if sequence is longer
+			for (let i = dbn.length; i < seqTmp.length; i++) {
+				dbnFinal += ".";
+			}
+		}
+		console.log(sepPosLst);
+		console.log(dbnFinal);
+		console.log("At this stage, structure and sequence should have same length: ", seqFinal.length == dbnFinal.length);
+		let ptable = ptableFromDBN(dbnFinal);
 		// Fill baseList
+		// TODO: Backbone
 		rna.baseList = new Array(ptable.length);
 		for (let i = 0; i < ptable.length; i++) {
-			let c = "";
-			try {
-				c = seq[i];
-			} catch (e) {
-				c = "";
-			}
-			rna.baseList[i] = new ModelBase(i, i+1, c);
+			rna.baseList[i] = new ModelBase(i, i+1, seqFinal[i]);
 		}
 		// Fill basepair
 		for (let i = 0; i < ptable.length; i++) {
 			let j = ptable[i];
 			if ((j == -1) || (j < i)) {
 				continue;
-			} else if (dbn[i] == '(') {
+			} else if (dbnFinal[i] == '(') {
 				rna.addBPNow(i, j);
 			} else {
 				rna.addBPAux(i, j);

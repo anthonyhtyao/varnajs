@@ -8,7 +8,7 @@ import * as models from "./models/index";
  * @param {Element} container - HTML element to draw RNA
  * @param {VARNAConfig} varnaCfg - VARNA configuration to draw
  */
-export function drawRNA(dbn, container, varnaCfg, seq=null) {
+export function drawRNA(dbn, container, varnaCfg, seq="") {
 	console.log(dbn);
 	let v = models.RNA.fromDBN(dbn, seq=seq);
 	v.cfg = varnaCfg;

@@ -1,9 +1,11 @@
 // RNA related helper functions
 //
 //
+import _ from "lodash";
 
 const OPENING = "([{<ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const CLOSING = ")]}>abcdefghijklmnopqrstuvwxyz";
+export const DBNStrandSep = "&";
 
 // TODO: Add check for well balanced dbn
 /**
@@ -39,4 +41,39 @@ export function ptableFromDBN(dbn) {
 	}
 	return ptable;
 
+}
+
+/**
+ * Convert RNA sequence into list
+ */
+export function parseSeq(seq) {
+	let analyzedSeq = [];
+	let i = 0;
+	while (i < seq.length) {
+		if (seq[i] == '{') {
+			let found = false;
+			let buf = "";
+			i++;
+			while (!found && (i < seq.length)) {
+				if (seq[i] != '}') {
+					buf += seq[i];
+					i++;
+				} else {
+					found = true
+				}
+			}
+			analyzedSeq.push(buf);
+		} else {
+			analyzedSeq.push(seq[i]);
+		}
+		i++;
+	}
+	return analyzedSeq;
+}
+
+/**
+ * Get indices where separator presents
+ */
+export function getSepPos(dbn) {
+	return _.filter(_.range(dbn.length), (i) => dbn[i] === DBNStrandSep);
 }
