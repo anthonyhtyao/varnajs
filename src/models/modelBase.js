@@ -1,6 +1,7 @@
 import _ from "lodash";
 
 import { ModelBP } from './modelBP';
+import { DefaultBackbone } from './modelBackbone';
 
 /**
  * ModelBase represents one base in RNA
@@ -19,6 +20,7 @@ export class ModelBase {
 	coords = {x: null, y: null};
 	center = {x: null, y: null};
 	style = null;
+	bacbone = DefaultBackbone;
 	constructor(ind, bn, label) {
 		this.ind = ind;
 		this.realInd = bn;
@@ -81,6 +83,18 @@ export class ModelBase {
 
 	getStyle() {
 		return this.style;
+	}
+
+	setBackbone(backbone) {
+		this.backbone = backbone;
+	}
+
+	getBackbone(backbone) {
+		return this.backbone;
+	}
+
+	getBackboneiType(backbone) {
+		return this.backbone.getType();
 	}
 }
 

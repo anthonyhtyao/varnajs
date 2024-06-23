@@ -7,7 +7,8 @@ import { ModelBase, ModelBaseStyle } from './modelBase';
 import { ModelBP } from './modelBP';
 import { drawBases } from '../layouts/layout';
 import { Layouts } from './config';
-import { ptableFromDBN, parseSeq} from '../utils/RNA';
+import { ptableFromDBN, parseSeq } from '../utils/RNA';
+import { DiscontinuousBackbone } from './modelBackbone';
 
 const DBNStrandSep = "&";
 
@@ -89,10 +90,15 @@ export class RNA {
 		console.log("At this stage, structure and sequence should have same length: ", seqFinal.length == dbnFinal.length);
 		let ptable = ptableFromDBN(dbnFinal);
 		// Fill baseList
-		// TODO: Backbone
 		rna.baseList = new Array(ptable.length);
 		for (let i = 0; i < ptable.length; i++) {
-			rna.baseList[i] = new ModelBase(i, i+1, seqFinal[i]);
+			let base = new ModelBase(i, i+1, seqFinal[i]);
+			// Next base belongs to another strand:w
+			//
+			if (sepPosLst.indexOf(i) >= 0) {
+				base.setBackbone(DiscontinuousBackbone);
+			}
+			rna.baseList[i] = base;
 		}
 		// Fill basepair
 		for (let i = 0; i < ptable.length; i++) {
@@ -336,14 +342,17 @@ export class RNA {
 		return {"el": elements, "style": styles};
 	}
 
-	// TODO: implement discontinuity
+	// TODO: custom backbone style
 	/**
 	 * Returns backbone in cytoscape edge element list with classes set to backbone
 	 */
 	elOfBackbones() {
 		let res = [];
 		for (let i = 0; i < this.baseList.length - 1; ++i) {
-			res.push({data: {id: 'backbone'+i, source: i, target: i+1}, "classes": "backbone"});
+			let backbone = this.baseList[i].getBackbone();
+			if (backbone != DiscontinuousBackbone) {
+				res.push({data: {id: 'backbone'+i, source: i, target: i+1}, "classes": "backbone"});
+			}
 		}
 		return res;
 	}
