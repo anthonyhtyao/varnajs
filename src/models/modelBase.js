@@ -1,6 +1,7 @@
 import _ from "lodash";
 
 import { ModelBP } from './modelBP';
+import { DefaultBackbone } from './modelBackbone';
 
 /**
  * ModelBase represents one base in RNA
@@ -19,6 +20,8 @@ export class ModelBase {
 	coords = {x: null, y: null};
 	center = {x: null, y: null};
 	style = null;
+	bacbone = DefaultBackbone;
+	classes = [];
 	constructor(ind, bn, label) {
 		this.ind = ind;
 		this.realInd = bn;
@@ -30,10 +33,10 @@ export class ModelBase {
 	 * @param {ModelBP} mbp - planar basepair
 	 */
 	setBP(mbp) {
-		this.bp= mbp;
+		this.bp = mbp;
 	}
 
-	getBP(mbp) {
+	getBP() {
 		return this.bp;
 	}
 
@@ -82,6 +85,22 @@ export class ModelBase {
 	getStyle() {
 		return this.style;
 	}
+
+	setBackbone(backbone) {
+		this.backbone = backbone;
+	}
+
+	getBackbone(backbone) {
+		return this.backbone;
+	}
+
+	getBackboneiType(backbone) {
+		return this.backbone.getType();
+	}
+
+	addCustomClass(inst) {
+		this.classes.push(inst);
+	}
 }
 
 
@@ -124,8 +143,9 @@ export class ModelBaseStyle {
 
 	/**
 	 * Return in cytoscape style format
+	 * @param {string} selector - cytoscape selector
 	 */
-  toCyStyle() {
+  toCyStyle(selector) {
 		let style = {node: {}, label: {}};
 		// For base node
 		let tmp = {};
@@ -140,7 +160,7 @@ export class ModelBaseStyle {
 		}
 		if (! _.isEmpty(tmp)) {
 			style.node = {
-				"selector": `node.basegroup${this.getId()}`,
+				"selector": `${selector}`,
 				"style": tmp,
 			}
 		}
@@ -148,13 +168,22 @@ export class ModelBaseStyle {
 		// For base label
 		if (this.baseNameColor !== null) {
 			style.label = {
-	  			"selector": `node.basegroup${this.getId()}[label]`,
+	  			"selector": `${selector}[label]`,
 	  			"style": {
 					"color": this.baseNameColor,
 				},
 			};
 		}
 		return style;
+	}
+
+	/**
+	 * Similar to toCyStyle, but return non empty styles in a list
+	 * @param {string} selector - cytoscape selector
+	 */
+  toCyStyleInList(selector) {
+		let lst = Object.values(this.toCyStyle(selector));
+		return _.filter(lst, (s) => (! _.isEmpty(s)));
 	}
 }
 

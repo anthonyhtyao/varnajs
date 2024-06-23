@@ -1,0 +1,44 @@
+
+<html>
+	<head>
+      <title>VARNA.js</title>
+		<script src="../build/varna.umd.js"></script>
+	</head>
+
+<style>
+    #cy {
+        width: 100%;
+        height: 100%;
+        top: 0px;
+        left: 0px;
+    }
+</style>
+	<body>
+     Motif test<br/>
+
+		<input type="text" id="ss">
+		<input type="text" id="seq">
+    <!-- <select id="layout"> -->
+    <!--     <option value="circle">Circle</option> -->
+    <!--     <option value="line">Line</option> -->
+    <!--     <option value="radiate">Radiate</option> -->
+    <!--     <option value="naview">NAView</option> -->
+    <!--     <option value="turtle">Turtle</option> -->
+    <!--     <option value="puzzler">Puzzler</option> -->
+    <!-- </select> -->
+    <button onclick="draw()">Click me</button>
+
+    <div id="cy"></div>
+		<script>
+			function draw() {
+        let ss = document.getElementById('ss').value, seq = document.getElementById('seq').value;
+        // let layout = document.getElementById('layout').value;
+        let v = varnajs.Motif.fromDBN(ss, seq);
+        let config = new varnajs.MotifConfig({baseNumPeriod: 2});
+	      v.cfg = config;
+        console.log("Motif:", v);
+	      v.createCy(document.getElementById("cy"));
+			}
+		</script>
+	</body>
+</html>

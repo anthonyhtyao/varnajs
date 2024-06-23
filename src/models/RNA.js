@@ -7,7 +7,10 @@ import { ModelBase, ModelBaseStyle } from './modelBase';
 import { ModelBP } from './modelBP';
 import { drawBases } from '../layouts/layout';
 import { Layouts } from './config';
-import { ptableFromDBN } from '../utils/RNA';
+import { ptableFromDBN, parseSeq } from '../utils/RNA';
+import { DiscontinuousBackbone } from './modelBackbone';
+
+const DBNStrandSep = "&";
 
 /**
  * Simple dot-bracket notation parser
@@ -30,14 +33,14 @@ let parseDBN = function(dbn){
 };
 
 /**
- * Structure is a basic class for RNA
+ * Basic class to draw one RNA
  * @class
  * @constructor
  * @public
  * @property {cytoscape} cy - cytoscape drawing
  * @property {Array} baseList - Array of ModelBase
  */
-class Structure {
+export class RNA {
 	cy;
 	cfg;
 	baseList = [];
@@ -48,37 +51,61 @@ class Structure {
 
 	// TODO: Refactor as VARNA
 	/**
-	 * Construct from given dbn and seq. At most one can be null
-	 * @param {string|null} dbn - secondary structure in dbn
-	 * @param {string|null} seq - RNA sequence
+	 * Construct from given dbn and seq. At most one can be empty
+	 * @param {string} dbn - secondary structure in dbn
+	 * @param {string} seq - RNA sequence
 	 */
 	static fromDBN(dbn, seq) {
-		let rna = new Structure();
-		let ptable;
-		if ((dbn === null) && (seq === null)) {
+		if ((dbn.length == 0) && (seq.length == 0)) {
 			throw new Error("At least one should be non-null!");
-		} else if (dbn === null) {
-			ptable = new Array(seq.length).fill(-1);
-		} else {
-			ptable = ptableFromDBN(dbn);
 		}
+		let rna = new this();
+		let seqTmp = (seq.length == 0)? [] : parseSeq(seq);
+		let sepPosLst = [];
+		let dbnFinal = ""
+		let seqFinal = [];
+		if (dbn.length == 0) {
+			dbnFinal = ".".repeat(seqTmp.length);
+			seqFinal = seqTmp;
+		} else {
+			// Parse strands if dbn is given
+			for (let i = 0; i < dbn.length; i++) {
+				let c = dbn[i];
+				if (c == DBNStrandSep && (seqTmp.length == 0 || seqTmp[i] == DBNStrandSep)) {
+					// Find separator at both dbn and seq, or seq is empty
+					sepPosLst.push(seqFinal.length - 1);
+				} else {
+					// Usual structural position, or separator unmatch
+					seqFinal.push((_.isUndefined(seqTmp[i])) ? "" : seqTmp[i]);
+					dbnFinal += c;
+				}
+			}
+			// Add unpaired bases if sequence is longer
+			for (let i = dbn.length; i < seqTmp.length; i++) {
+				dbnFinal += ".";
+			}
+		}
+		console.log(sepPosLst);
+		console.log(dbnFinal);
+		console.log("At this stage, structure and sequence should have same length: ", seqFinal.length == dbnFinal.length);
+		let ptable = ptableFromDBN(dbnFinal);
 		// Fill baseList
 		rna.baseList = new Array(ptable.length);
 		for (let i = 0; i < ptable.length; i++) {
-			let c = "";
-			try {
-				c = seq[i];
-			} catch (e) {
-				c = "";
+			let base = new ModelBase(i, i+1, seqFinal[i]);
+			// Next base belongs to another strand:w
+			//
+			if (sepPosLst.indexOf(i) >= 0) {
+				base.setBackbone(DiscontinuousBackbone);
 			}
-			rna.baseList[i] = new ModelBase(i, i+1, c);
+			rna.baseList[i] = base;
 		}
 		// Fill basepair
 		for (let i = 0; i < ptable.length; i++) {
 			let j = ptable[i];
 			if ((j == -1) || (j < i)) {
 				continue;
-			} else if (dbn[i] == '(') {
+			} else if (dbnFinal[i] == '(') {
 				rna.addBPNow(i, j);
 			} else {
 				rna.addBPAux(i, j);
@@ -215,7 +242,8 @@ class Structure {
 		for (let i = 0; i < this.baseList.length; ++i) {
 			let base = this.baseList[i];
 			let baseEl = {data: {id: base.ind, label: base.c, num: base.getBaseNum()}}
-			baseEl['classes'] = [];
+			// Set custom base classes
+			baseEl['classes'] = [...base.classes];
 			// Add baseNum class for node to draw base number
 			if (isNumberDrawn(base, this.cfg.baseNumPeriod, this.baseList.length)) {
 				baseEl["classes"].push("baseNum");
@@ -260,17 +288,9 @@ class Structure {
   	}
 		let res = [generalStyle, baseNameStyle];
 		// Specific base style
-		this.baseStyleList.forEach((basestyle) => {
-			let style = basestyle.toCyStyle();
-			// For base node
-			if (! _.isEmpty(style.node)) {
-				res.push(style.node);
-			}
-			// For base label
-			if (! _.isEmpty(style.label)) {
-				res.push(style.label);
-			}
-		});
+		this.baseStyleList.forEach((basestyle) => 
+			res.push(...basestyle.toCyStyleInList(`node.basegroup${basestyle.getId()}`))
+		);
 		return res;
 	}
 
@@ -315,14 +335,17 @@ class Structure {
 		return {"el": elements, "style": styles};
 	}
 
-	// TODO: implement discontinuity
+	// TODO: custom backbone style
 	/**
 	 * Returns backbone in cytoscape edge element list with classes set to backbone
 	 */
 	elOfBackbones() {
 		let res = [];
 		for (let i = 0; i < this.baseList.length - 1; ++i) {
-			res.push({data: {id: 'backbone'+i, source: i, target: i+1}, "classes": "backbone"});
+			let backbone = this.baseList[i].getBackbone();
+			if (backbone != DiscontinuousBackbone) {
+				res.push({data: {id: 'backbone'+i, source: i, target: i+1}, "classes": "backbone"});
+			}
 		}
 		return res;
 	}
@@ -429,6 +452,10 @@ class Structure {
 		return res;
 	}
 
+
+	customStyle() {
+		return [];
+	}
 	
 
 	/**
@@ -444,7 +471,7 @@ class Structure {
 		let bpsCy= this.cyOfBPs();
 
 		let elements = [...basesCy.el, ...backbonesCy.el, ...bpsCy.el];
-		let styles = [...basesCy.style, ...backbonesCy.style, ...bpsCy.style];
+		let styles = [...basesCy.style, ...backbonesCy.style, ...bpsCy.style, ...this.customStyle()];
 		
 		// Set layout (base position)
 		let layoutDict = {'name': 'preset'};
@@ -476,10 +503,9 @@ class Structure {
  * @param {int} total - total base number
  */
 function isNumberDrawn(mb, period, total) {
-	if (period <= 0) {
+	if ((period <= 0) || (mb.getBaseNum() === null)) {
 		return false;
 	}
 	return (mb.ind == 0) || (mb.getBaseNum() % period == 0) || (mb.ind == total -1);
 }
 
-export {Structure};
