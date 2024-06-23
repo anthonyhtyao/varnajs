@@ -93,6 +93,19 @@ export class ModelBP {
 		}
 	}
 
+	/**
+	 * Set color and thickness of basepair
+	 * @param {Object} opt - basepair style in {color: xxx, thickness: yyy}. xxx should be a string and yyy is a float
+	 */
+	setStyle(opt={}) {
+		if (("color" in opt) && (opt.color !== null) && (_.isString(opt.color))) {
+			this.color = opt.color;
+		}
+		if (("thickness" in opt) && (opt.thickness !== null)) {
+			this.thickness = parseFloat(opt.thickness);
+		}
+	}
+
 	getType() {
 		return `${this.stericity}${this.edge5}${this.edge3}`;
 	}

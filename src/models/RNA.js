@@ -242,7 +242,8 @@ export class RNA {
 		for (let i = 0; i < this.baseList.length; ++i) {
 			let base = this.baseList[i];
 			let baseEl = {data: {id: base.ind, label: base.c, num: base.getBaseNum()}}
-			baseEl['classes'] = [];
+			// Set custom base classes
+			baseEl['classes'] = [...base.classes];
 			// Add baseNum class for node to draw base number
 			if (isNumberDrawn(base, this.cfg.baseNumPeriod, this.baseList.length)) {
 				baseEl["classes"].push("baseNum");
@@ -287,17 +288,9 @@ export class RNA {
   	}
 		let res = [generalStyle, baseNameStyle];
 		// Specific base style
-		this.baseStyleList.forEach((basestyle) => {
-			let style = basestyle.toCyStyle();
-			// For base node
-			if (! _.isEmpty(style.node)) {
-				res.push(style.node);
-			}
-			// For base label
-			if (! _.isEmpty(style.label)) {
-				res.push(style.label);
-			}
-		});
+		this.baseStyleList.forEach((basestyle) => 
+			res.push(...basestyle.toCyStyleInList(`node.basegroup${basestyle.getId()}`))
+		);
 		return res;
 	}
 
@@ -459,6 +452,10 @@ export class RNA {
 		return res;
 	}
 
+
+	customStyle() {
+		return [];
+	}
 	
 
 	/**
@@ -474,7 +471,7 @@ export class RNA {
 		let bpsCy= this.cyOfBPs();
 
 		let elements = [...basesCy.el, ...backbonesCy.el, ...bpsCy.el];
-		let styles = [...basesCy.style, ...backbonesCy.style, ...bpsCy.style];
+		let styles = [...basesCy.style, ...backbonesCy.style, ...bpsCy.style, ...this.customStyle()];
 		
 		// Set layout (base position)
 		let layoutDict = {'name': 'preset'};
@@ -506,7 +503,7 @@ export class RNA {
  * @param {int} total - total base number
  */
 function isNumberDrawn(mb, period, total) {
-	if (period <= 0) {
+	if ((period <= 0) || (mb.getBaseNum() === null)) {
 		return false;
 	}
 	return (mb.ind == 0) || (mb.getBaseNum() % period == 0) || (mb.ind == total -1);
