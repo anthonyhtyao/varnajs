@@ -447,7 +447,8 @@ export class RNA {
 					if (_.isUndefined(edgeEl.style)) {
 						edgeEl.style = {};
 					}
-					edgeEl.style["control-point-distance"] = -(bp.partner3.ind-bp.partner5.ind)*20;
+					let factor = (cfg.bpLowerPlane) ? 1 : -1;
+					edgeEl.style["control-point-distance"] = factor * (bp.partner3.ind-bp.partner5.ind)*20;
 				}
 				res.push(edgeEl);
 			}
@@ -470,7 +471,8 @@ export class RNA {
 				if (_.isUndefined(edgeEl.style)) {
 					edgeEl.style = {};
 				}
-				edgeEl.style["control-point-distance"] = -(bp.partner3.ind-bp.partner5.ind)*20;
+				let factor = (cfg.bpLowerPlane) ? 1 : -1;
+				edgeEl.style["control-point-distance"] = factor * (bp.partner3.ind-bp.partner5.ind)*20;
 			}
 			console.log(edgeEl);
 			res.push(edgeEl);
