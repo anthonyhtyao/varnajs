@@ -63,8 +63,8 @@ export class Motif extends RNA {
 
 
 	customStyle() {
-		let dummy = this.cfg.dummyBaseStyle.toCyStyleInList(`node.dummy`);
-		let root = this.cfg.rootBaseStyle.toCyStyleInList(`node.root`);
+		let dummy = this.cfg.dummyBaseStyle.toCyStyleInList(this.getSelector(`node.dummy`));
+		let root = this.cfg.rootBaseStyle.toCyStyleInList(this.getSelector(`node.root`));
 		return [...dummy, ...root];
 	}
 }

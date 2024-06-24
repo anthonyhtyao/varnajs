@@ -115,7 +115,13 @@ export class ModelBP {
 	 */
 	toCyElement() {
 		let el = {
-			"data": {"source": this.partner5.ind, "target": this.partner3.ind, "label": this.getType()}};
+			"data": {
+				"source": this.partner5.ind,
+				"target": this.partner3.ind,
+				"label": this.getType()
+			},
+			"classes": ["basepair"],
+		};
 		let style = {};
 		if (this.color !== null) {
 			style["line-color"] = this.color;

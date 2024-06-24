@@ -41,6 +41,7 @@ let parseDBN = function(dbn){
  * @property {Array} baseList - Array of ModelBase
  */
 export class RNA {
+	name = null;
 	cy;
 	cfg;
 	baseList = [];
@@ -113,6 +114,41 @@ export class RNA {
 		}
 		console.log(rna);
 		return rna;
+	}
+
+	getSelector(inst) {
+		if (this.name === null) {
+			return inst;
+		}
+		let instNew = inst;
+		["node", "edge"].forEach((t) => {
+			if (inst.startsWith(t)) {
+				instNew = inst.replace(t, `${t}.${this.name}`);
+				console.log(instNew);
+			}
+		});
+		return instNew;
+	}
+
+	getCyId(id, type) {
+		let newId = (this.name === null) ? "" : `${this.name}_`;
+		switch (type) {
+			case "base":
+				newId += "";
+				break;
+			case "backbone":
+				newId += "backbone_";
+				break;
+			case "planar":
+				newId += "planarbp_";
+				break;
+			case "aux":
+				newId += "auxbp_";
+				break;
+			default:
+				throw new Error(`Unknown type: ${type}`);
+		}
+		return newId + id;
 	}
 
 	/*
@@ -241,9 +277,18 @@ export class RNA {
 		let res = [];
 		for (let i = 0; i < this.baseList.length; ++i) {
 			let base = this.baseList[i];
-			let baseEl = {data: {id: base.ind, label: base.c, num: base.getBaseNum()}}
+			let baseEl = {
+				data: {
+					id: this.getCyId(base.ind, "base"),
+					label: base.c,
+					num: base.getBaseNum()
+				}
+			};
 			// Set custom base classes
 			baseEl['classes'] = [...base.classes];
+			if (this.name !== null) {
+				baseEl['classes'].push(this.name);
+			}
 			// Add baseNum class for node to draw base number
 			if (isNumberDrawn(base, this.cfg.baseNumPeriod, this.baseList.length)) {
 				baseEl["classes"].push("baseNum");
@@ -265,31 +310,13 @@ export class RNA {
 	styleOfBases() {
 		let cfg = this.cfg;
 		// Default style for all bases
-		let generalStyle = {
-			"selector": "node",
-			"style": {
-				"width": 20,
-				"height": 20,
-				"background-color": cfg.baseInnerColor,
-				"border-width": cfg.baseOutlineThickness,
-				"border-color": cfg.baseOutlineColor,
-				"visibility": cfg.drawBases ? "visible" : "hidden",
-			},
-		}
+		let generalStyle = cfg.baseCyStyle(this.getSelector("node"));
 		// Default style for base label
-		let baseNameStyle = {
-    	"selector": "node[label]",
-    	"style": {
-      	"label": "data(label)",
-				"text-valign": "center",
-      	"text-halign": "center",
-				"color": cfg.baseNameColor,
-    	}
-  	}
+		let baseNameStyle = cfg.baseNameCyStyle(this.getSelector("node[label]"));
 		let res = [generalStyle, baseNameStyle];
 		// Specific base style
 		this.baseStyleList.forEach((basestyle) => 
-			res.push(...basestyle.toCyStyleInList(`node.basegroup${basestyle.getId()}`))
+			res.push(...basestyle.toCyStyleInList(this.getSelector(`node.basegroup${basestyle.getId()}`)))
 		);
 		return res;
 	}
@@ -344,7 +371,18 @@ export class RNA {
 		for (let i = 0; i < this.baseList.length - 1; ++i) {
 			let backbone = this.baseList[i].getBackbone();
 			if (backbone != DiscontinuousBackbone) {
-				res.push({data: {id: 'backbone'+i, source: i, target: i+1}, "classes": "backbone"});
+				let el = {
+					"data": {
+						id: this.getCyId(i, 'backbone'),
+						source: this.getCyId(i, 'base'),
+						target: this.getCyId(i+1, 'base')
+					},
+					"classes": ["backbone"]
+				};
+				if (this.name !== null) {
+					el.classes.push(this.name);
+				}
+				res.push(el);
 			}
 		}
 		return res;
@@ -356,14 +394,7 @@ export class RNA {
 	styleOfBackbones() {
 		let cfg = this.cfg;
 		let res = [];
-		let generalStyle = {
-			"selector": "edge.backbone",
-			"style": {
-				"line-color": cfg.backboneColor,
-				"width": cfg.backboneThickness,
-				"visibility": cfg.drawBackbone? "visible" : "hidden",
-			}
-		}
+		let generalStyle = cfg.backboneCyStyle(this.getSelector("edge.backbone"));
 		res.push(generalStyle);
 		return res;
 	}
@@ -382,6 +413,22 @@ export class RNA {
 		return {"el": elements, "style": styles};
 	}
 
+
+	/**
+	 * Returns cytoscape edge element for one single bp
+	 */
+	elOfSingleBP(bp) {
+		let edgeEl = bp.toCyElement();
+		if (this.name !== null) {
+			edgeEl.classes.push(this.name);
+		}
+		// Here, we need to correct source and target base id
+		edgeEl.data.source = this.getCyId(edgeEl.data.source, "base");
+		edgeEl.data.target = this.getCyId(edgeEl.data.target, "base");
+
+		return edgeEl;
+	}
+
 	/**
 	 * Returns planar basepair in cytoscape edge element list with classes set to basepair and planarbp
 	 */
@@ -393,9 +440,9 @@ export class RNA {
 			let j = base.getPartnerInd();
 			if (j > base.ind) {
 				let bp = base.getBP();
-				let edgeEl = bp.toCyElement();
-				edgeEl.data.id = `planarbp${base.ind}`;
-				edgeEl.classes = ["basepair", "planarbp"];
+				let edgeEl = this.elOfSingleBP(bp);
+				edgeEl.data.id = this.getCyId(base.ind, "planar");
+				edgeEl.classes.push("planarbp");
 				if (cfg.layout == Layouts.LINE) {
 					if (_.isUndefined(edgeEl.style)) {
 						edgeEl.style = {};
@@ -416,9 +463,9 @@ export class RNA {
 		let res = [];
 		for (let i = 0; i < this.auxBPs.length; i++) {
 			let bp = this.auxBPs[i];
-			let edgeEl = bp.toCyElement();
-			edgeEl.data.id = `auxbp${i}`;
-			edgeEl.classes = ["basepair", "auxbp"];
+			let edgeEl = this.elOfSingleBP(bp);
+			edgeEl.data.id = this.getCyId(i, "aux");
+			edgeEl.classes.push("auxbp");
 			if (cfg.layout == Layouts.LINE) {
 				if (_.isUndefined(edgeEl.style)) {
 					edgeEl.style = {};
@@ -437,13 +484,7 @@ export class RNA {
 	styleOfBPs() {
 		let cfg = this.cfg;
 		let res = [];
-		let generalStyle = {
-			"selector": "edge.basepair",
-			"style": {
-				"line-color": cfg.bpColor,
-				"width": cfg.bpThickness,
-			}
-		}
+		let generalStyle = cfg.bpCyStyle(this.getSelector("edge.basepair"));
 		if (cfg.layout == Layouts.LINE) {
 			generalStyle.style["curve-style"] = "unbundled-bezier";
 			generalStyle.style["control-point-weight"] = 0.5;
@@ -458,11 +499,7 @@ export class RNA {
 	}
 	
 
-	/**
-	 *	Create cytoscape drawing
-	 *	@param {DOM element} container - where to draw cytoscape
-	 */
-	createCy(container) {
+	createCyFormat() {
 		let cfg = this.cfg;
 		var coords = drawBases(this.baseList, cfg);
 
@@ -476,11 +513,21 @@ export class RNA {
 		// Set layout (base position)
 		let layoutDict = {'name': 'preset'};
 		let cyDist = {
-  		container: container,
   	  elements: elements,
 			layout: layoutDict,
 			style: styles
   	 };
+		return cyDist;	
+	}
+
+	/**
+	 *	Create cytoscape drawing
+	 *	@param {DOM element} container - where to draw cytoscape
+	 */
+	createCy(container) {
+		let cfg = this.cfg;
+		let cyDist = this.createCyFormat();
+  	cyDist["container"] = container;
 
 		var cy = cytoscape(cyDist);
 		this.cy = cy;

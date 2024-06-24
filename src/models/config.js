@@ -94,6 +94,73 @@ export class VARNAConfig {
 	constructor (opt={}) {
 		Object.assign(this, opt);
 	}
+
+	/**
+	 * Create general cytoscape style for bases
+	 * @param {string} selector - base selector (default: "node")
+	 */
+	baseCyStyle(selector="node") {
+		let style = {
+		  "selector": `${selector}`,
+		  "style": {
+		  	"width": 20,
+		  	"height": 20,
+		  	"background-color": this.baseInnerColor,
+		  	"border-width": this.baseOutlineThickness,
+		  	"border-color": this.baseOutlineColor,
+		  	"visibility": this.drawBases ? "visible" : "hidden",
+		  },
+		}
+		return style;
+	}
+
+	/**
+	 * Create general cytoscape style for base names
+	 * @param {string} selector - base name selector (default: "node[label]")
+	 */
+	baseNameCyStyle(selector="node[label]") {
+		let style = {
+    	"selector": `${selector}`,
+    	"style": {
+      	"label": "data(label)",
+				"text-valign": "center",
+      	"text-halign": "center",
+				"color": this.baseNameColor,
+    	}
+		}
+		return style;
+	}
+
+	/**
+	 * Create general cytoscape style for backbone
+	 * @param {string} selector - backbone selector (default: "edge.backbone")
+	 */
+	backboneCyStyle(selector="edge.bacbone") {
+		let style = {
+    	"selector": `${selector}`,
+			"style": {
+				"line-color": this.backboneColor,
+				"width": this.backboneThickness,
+				"visibility": this.drawBackbone? "visible" : "hidden",
+			}
+		}
+		return style;
+	}
+
+	/**
+	 * Create general cytoscape style forbasepair 
+	 * @param {string} selector - basepair selector (default: "edge.basepair")
+	 */
+	bpCyStyle(selector="edge.bacbone") {
+		let style = {
+    	"selector": `${selector}`,
+			"style": {
+				"line-color": this.bpColor,
+				"width": this.bpThickness,
+			}
+		}
+		return style;
+	}
 }
 
 
