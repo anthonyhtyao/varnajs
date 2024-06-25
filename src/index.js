@@ -1,5 +1,6 @@
 export * from "./models/index";
 export * from "./singleDraw/index";
+export * from "./multiDraw/index";
 import * as models from "./models/index";
 
 /**

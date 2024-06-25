@@ -55,6 +55,7 @@ export const BASEPAIR_THICKNESS_DEFAULT = 1;
  * @property {int} backboneThickness - backbone thickness (default: 1)
  * @property {string} bpColor - basepair color (default: blue)
  * @property {int} bpThickness - basepair thickness (default: 1)
+ * @property {bool} bpLowerPlane - draw basepair in lower plane in linear layout (default: false)
  * @property {bool} drawBases - base visibility (default: true)
  * @property {bool} drawBacbone - backbone visibility (default: true)
  * @property {Puzzler} puzzler - puzzler setting
@@ -83,6 +84,7 @@ export class VARNAConfig {
 	// (Canonical) basepair
 	bpColor = BASEPAIR_COLOR_DEFAULT;
 	bpThickness = BASEPAIR_THICKNESS_DEFAULT;
+	bpLowerPlane = false;
 	
 	// Visibility 
 	drawBases = true;
@@ -93,6 +95,77 @@ export class VARNAConfig {
 	// TODO: Check invalid argument
 	constructor (opt={}) {
 		Object.assign(this, opt);
+	}
+
+	set (opt={}) {
+		Object.assign(this, opt);
+	}
+
+	/**
+	 * Create general cytoscape style for bases
+	 * @param {string} selector - base selector (default: "node")
+	 */
+	baseCyStyle(selector="node") {
+		let style = {
+		  "selector": `${selector}`,
+		  "style": {
+		  	"width": 20,
+		  	"height": 20,
+		  	"background-color": this.baseInnerColor,
+		  	"border-width": this.baseOutlineThickness,
+		  	"border-color": this.baseOutlineColor,
+		  	"visibility": this.drawBases ? "visible" : "hidden",
+		  },
+		}
+		return style;
+	}
+
+	/**
+	 * Create general cytoscape style for base names
+	 * @param {string} selector - base name selector (default: "node[label]")
+	 */
+	baseNameCyStyle(selector="node[label]") {
+		let style = {
+    	"selector": `${selector}`,
+    	"style": {
+      	"label": "data(label)",
+				"text-valign": "center",
+      	"text-halign": "center",
+				"color": this.baseNameColor,
+    	}
+		}
+		return style;
+	}
+
+	/**
+	 * Create general cytoscape style for backbone
+	 * @param {string} selector - backbone selector (default: "edge.backbone")
+	 */
+	backboneCyStyle(selector="edge.bacbone") {
+		let style = {
+    	"selector": `${selector}`,
+			"style": {
+				"line-color": this.backboneColor,
+				"width": this.backboneThickness,
+				"visibility": this.drawBackbone? "visible" : "hidden",
+			}
+		}
+		return style;
+	}
+
+	/**
+	 * Create general cytoscape style forbasepair 
+	 * @param {string} selector - basepair selector (default: "edge.basepair")
+	 */
+	bpCyStyle(selector="edge.bacbone") {
+		let style = {
+    	"selector": `${selector}`,
+			"style": {
+				"line-color": this.bpColor,
+				"width": this.bpThickness,
+			}
+		}
+		return style;
 	}
 }
 
