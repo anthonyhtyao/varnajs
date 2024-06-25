@@ -32,7 +32,7 @@
 			function draw() {
         let ss = document.getElementById('ss').value, seq = document.getElementById('seq').value;
         let layout = document.getElementById('layout').value;
-        let v = varnajs.RNA.fromDBN(ss, seq);
+        let v = varnajs.Structure.fromDBN(ss, seq);
         let config = new varnajs.VARNAConfig({layout: layout});
 	      v.setConfig(config);
 	      v.createCy(document.getElementById("cy"));
