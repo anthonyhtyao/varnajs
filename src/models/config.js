@@ -173,7 +173,7 @@ export class VARNAConfig {
 /**
  * Special configuration for RNApuzzler
  * @class
- * @public
+ * @private
  * @property {bool} checkExteriorIntersections - flag for no interaction with exterior loop (default: true)
  * @property {bool} checkSiblingIntersections - flag for no interaction with sibling loops default: true)
  * @property {bool} checkAncestorIntersections - flag for no interaction with ancestor loops (default: true)

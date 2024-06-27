@@ -1,12 +1,9 @@
 import _ from "lodash";
-import cytoscape from 'cytoscape';
-import htmlLabel from 'cytoscape-html-label';
-htmlLabel( cytoscape );
 
 import { ModelBase, ModelBaseStyle } from './modelBase';
 import { ModelBP } from './modelBP';
 import { drawBases } from '../layouts/layout';
-import { Layouts } from './config';
+import { Layouts, VARNAConfig } from './config';
 import { ptableFromDBN, parseSeq } from '../utils/RNA';
 import { DiscontinuousBackbone } from './modelBackbone';
 
@@ -86,9 +83,6 @@ export class RNA {
 				dbnFinal += ".";
 			}
 		}
-		console.log(sepPosLst);
-		console.log(dbnFinal);
-		console.log("At this stage, structure and sequence should have same length: ", seqFinal.length == dbnFinal.length);
 		let ptable = ptableFromDBN(dbnFinal);
 		// Fill baseList
 		rna.baseList = new Array(ptable.length);
@@ -112,8 +106,19 @@ export class RNA {
 				rna.addBPAux(i, j);
 			}
 		}
-		console.log(rna);
 		return rna;
+	}
+
+
+	/**
+	 * Set drawing configuration
+	 * @param {VARNAConfig} cfg - configuration to draw
+	 */
+	setConfig(cfg) {
+		if (! cfg instanceof VARNAConfig) {
+			throw new Error(`${cfg} is not an instance of VARNAConfig`)
+		}
+		this.cfg = cfg;
 	}
 
 	getSelector(inst) {
@@ -124,7 +129,6 @@ export class RNA {
 		["node", "edge"].forEach((t) => {
 			if (inst.startsWith(t)) {
 				instNew = inst.replace(t, `${t}.${this.name}`);
-				console.log(instNew);
 			}
 		});
 		return instNew;
@@ -193,7 +197,6 @@ export class RNA {
 				if (indl != -1) {
 					if ((indl <= indi) || (indl >= indj)) {
 						// Violate planar
-						console.log(`Violate planar: (${indi}, ${indj})`);
 						this.addBPAux(basei, basej, mbp);
 						return;
 					}
@@ -474,7 +477,6 @@ export class RNA {
 				let factor = (cfg.bpLowerPlane) ? 1 : -1;
 				edgeEl.style["control-point-distance"] = factor * (bp.partner3.ind-bp.partner5.ind)*20;
 			}
-			console.log(edgeEl);
 			res.push(edgeEl);
 		}
 		return res;
@@ -522,30 +524,11 @@ export class RNA {
 		return cyDist;	
 	}
 
-	/**
-	 *	Create cytoscape drawing
-	 *	@param {DOM element} container - where to draw cytoscape
-	 */
-	createCy(container) {
-		let cfg = this.cfg;
-		let cyDist = this.createCyFormat();
-  	cyDist["container"] = container;
-
-		var cy = cytoscape(cyDist);
-		this.cy = cy;
-
-		// HTML label
-		let baseNumLabel = this.cyOfBaseNum();
-		let htmlLabel = [...baseNumLabel];
-		if (htmlLabel.length != 0) {
-			cy.htmlLabel([...baseNumLabel]);
-		}
-		console.log(cy);
-	}
 }
 
 /**
  * Return true to show number of given base
+ * @private
  *
  * @param {ModelBase} mb - base in ModelBase
  * @param {int} period - base number period

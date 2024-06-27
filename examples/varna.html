@@ -1,7 +1,7 @@
 <html>
 	<head>
       <title>VARNA.js</title>
-		<script src="../build/varna.umd.js"></script>
+		<script src="../dist/varna.umd.js"></script>
 	</head>
 
 <style>
@@ -32,15 +32,9 @@
 			function draw() {
         let ss = document.getElementById('ss').value, seq = document.getElementById('seq').value;
         let layout = document.getElementById('layout').value;
-        let v = varnajs.RNA.fromDBN(ss, seq);
-        let config = new varnajs.VARNAConfig({layout: layout, baseNameColor: 'orange', baseNumPeriod: 0, bpLowerPlane: true});
-	      let style = new varnajs.ModelBaseStyle({baseNumColor: "red", baseInnerColor: "green"});
-	      v.applyBasesStyle(style, 0, 1, 2);
-	      v.addBP(1, 5, {'color': 'red'});
-        if (ss.length > 259) {
-	        v.addBP(5, 259);
-        }
-	      v.cfg = config;
+        let v = varnajs.Structure.fromDBN(ss, seq);
+        let config = new varnajs.VARNAConfig({layout: layout});
+	      v.setConfig(config);
 	      v.createCy(document.getElementById("cy"));
 			}
 		</script>

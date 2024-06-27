@@ -1,7 +1,7 @@
 <html>
 	<head>
       <title>VARNA.js</title>
-		<script src="../build/varna.umd.js"></script>
+		<script src="../dist/varna.umd.js"></script>
 	</head>
 
 <style>
@@ -69,10 +69,10 @@
 					let vConfig = new varnajs.VARNAConfig({
 						layout: layout,
 						baseInnerColor: "red",
-						spaceBetweenBases: 1,
+						spaceBetweenBases: 2,
 						drawBackbone: false,
 					});
-					let v = varnajs.drawRNA(ss, document.getElementById(layout), vConfig);
+					let v = varnajs.drawRNA(document.getElementById(layout), ss, "", vConfig);
 				}
 			}
 		</script>

@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { VARNAConfig } from "../models/config";
 import { ModelBaseStyle } from "../models/modelBase";
-import { RNA } from "../models/RNA";
+import { Structure } from "./structure";
 
 
 /**
@@ -23,7 +23,7 @@ export class MotifConfig extends VARNAConfig {
 /**
  * Motif drawing class
  */
-export class Motif extends RNA {
+export class Motif extends Structure {
 	cfg = new MotifConfig();
 
 	static fromDBN(dbn, seq="") {

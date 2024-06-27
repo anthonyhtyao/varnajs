@@ -1,6 +1,7 @@
 {
   "source": {
-    "include" : ["src"]
+    "include" : ["src"],
+    "exclude" : ["src/layouts", "src/utils"]
   },
   
   "opts": {
