@@ -5,6 +5,9 @@ This project aims to provide a javascript library to visualize RNA secondary str
 # Disclaimer
 
 Releases v0.x are incomplete that are served as collecting feedback while implementing more features.The official releases v1.x will probably not have backward compatibility. Any bug found and suggestion are welcome.
+- [Gitlab Project](https://gitlab.com/htyao/varnajs)
+- [Github Issues](https://github.com/anthonyhtyao/varnajs/issues) (Issues on gitlab are also welcomed)
+- [Documentation](https://htyao.gitlab.io/varnajs)
 
 # Usage
 
