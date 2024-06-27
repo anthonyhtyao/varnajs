@@ -1,6 +1,6 @@
 {
   "name": "varnajs",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "RNA secondary structure visualization on webpage",
   "type": "module",
   "main": "index.js",
