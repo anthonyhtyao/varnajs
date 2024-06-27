@@ -1,0 +1,46 @@
+{
+  "name": "varnajs",
+  "version": "0.1.0",
+  "description": "RNA secondary structure visualization on webpage",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "build": "rollup -c",
+    "build:esm": "cross-env FILE=esm rollup -c",
+    "build:esm.min": "cross-env FILE=esm.min rollup -c",
+    "build:cjs": "cross-env FILE=cjs rollup -c",
+    "build:umd": "cross-env FILE=umd rollup -c",
+    "build:min": "cross-env FILE=min rollup -c",
+    "doc": "jsdoc -r -c jsdoc_config.json",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/htyao/varnajs.git"
+  },
+  "keywords": [
+    "RNA"
+  ],
+  "author": "htyao",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/htyao/varnajs/issues"
+  },
+  "homepage": "https://gitlab.com/htyao/varnajs#readme",
+  "dependencies": {
+    "cytoscape": "^3.29.2",
+    "cytoscape-html-label": "^1.1.7",
+    "lodash": "^4.17.21",
+    "math-float64-signbit": "^1.0.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^25.0.8",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-replace": "^5.0.5",
+    "@rollup/plugin-terser": "^0.4.4",
+    "cross-env": "^7.0.3",
+    "jsdoc": "^4.0.3",
+    "rollup": "^4.18.0"
+  }
+}

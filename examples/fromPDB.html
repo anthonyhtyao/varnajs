@@ -1,0 +1,58 @@
+
+<html>
+	<head>
+      <title>VARNA.js</title>
+		<script src="../dist/varna.umd.js"></script>
+	</head>
+
+<style>
+    #cy {
+        width: 100%;
+        height: 100%;
+        top: 0px;
+        left: 0px;
+    }
+</style>
+	<body>
+
+		PDB ID:<input type="text" id="pdb">
+		CHAIN ID<input type="text" id="chain">
+    <button onclick="draw()">Click me</button>
+
+    <div id="cy"></div>
+		<script>
+			function draw() {
+        let pdbid = document.getElementById('pdb').value.toLowerCase();
+        let chainid = document.getElementById('chain').value;
+				// Download json
+				fetch(`https://www.ebi.ac.uk/pdbe/static/entry/${pdbid}_${chainid}_basepair.json`)
+					.then(res => res.json())
+					.then(out => { 
+						// Download seq
+						fetch(`https://www.ebi.ac.uk/pdbe/api/pdb/entry/residue_listing/${pdbid}/chain/${chainid}`)
+						.then(res => res.json())
+						.then(out1 => {
+						console.log('Success download interactions json');
+						console.log(out1[pdbid]);
+						let seq = getSeq(out1[pdbid]);
+						let v = varnajs.Structure.fromEBIJson(seq.length, out, seq);
+						v.setConfig(new varnajs.VARNAConfig());
+	      		v.createCy(document.getElementById("cy"));
+						})
+						.catch(err => console.log(err));
+						
+					})
+					.catch(err => console.log(err));
+        // let v = varnajs.Structure.fromDBN(ss, seq);
+        // let config = new varnajs.VARNAConfig({layout: layout});
+	      // v.setConfig(config);
+			}
+
+			function getSeq(data) {
+				let res = "";
+				data['molecules'][0]['chains'][0]['residues'].forEach((base) => res += base['residue_name']);
+				return res;
+			}
+		</script>
+	</body>
+</html>

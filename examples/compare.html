@@ -1,0 +1,38 @@
+<html>
+	<head>
+      <title>VARNA.js</title>
+		<script src="../dist/varna.umd.js"></script>
+	</head>
+
+<style>
+    #cy {
+        width: 100%;
+        height: 100%;
+        top: 0px;
+        left: 0px;
+    }
+</style>
+	<body>
+
+		ss1: <input type="text" id="ss1">
+		ss2: <input type="text" id="ss2">
+		seq: <input type="text" id="seq">
+    <button onclick="draw()">Click me</button>
+
+    <div id="cy"></div>
+		<script>
+			function draw() {
+        let ss1 = document.getElementById('ss1').value;
+        let ss2 = document.getElementById('ss2').value;
+        let seq = document.getElementById('seq').value;
+        let v1 = varnajs.RNA.fromDBN(ss1, seq);
+        let v2 = varnajs.RNA.fromDBN(ss2, seq);
+				let config2 = new varnajs.VARNAConfig({bpColor: "red"});
+	      v1.cfg = new varnajs.VARNAConfig();
+	      v2.cfg = config2;
+				let together = new varnajs.PlaneCompare(v1, v2);
+	      together.createCy(document.getElementById("cy"));
+			}
+		</script>
+	</body>
+</html>

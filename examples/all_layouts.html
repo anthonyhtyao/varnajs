@@ -1,0 +1,79 @@
+<html>
+	<head>
+      <title>VARNA.js</title>
+		<script src="../dist/varna.umd.js"></script>
+	</head>
+
+<style>
+    .cy {
+        width: 600px;
+        height: 450px;
+        top: 0px;
+        left: 0px;
+    }
+</style>
+	<body>
+
+		<input type="text" id="ss">
+    <button onclick="draw()">Click me</button> 
+
+		<table>
+			<tr>
+				<th> Circle </th>
+				<th> NAView </th>
+				<th> Radiate </th>
+			</tr>
+			<tr>
+				<td>
+    			<div id="circle" class="cy"></div>
+				</td>
+				<td>
+    			<div id="naview" class="cy"></div>
+				</td>
+				<td>
+    			<div id="radiate" class="cy"></div>
+				</td>
+			</tr>
+			<tr>
+				<th> Line </th>
+				<th> Turtle </th>
+				<th> Puzzler </th>
+			</tr>
+			<tr>
+				<td>
+    			<div id="line" class="cy"></div>
+				</td>
+				<td>
+    			<div id="turtle" class="cy"></div>
+				</td>
+				<td>
+    			<div id="puzzler" class="cy"></div>
+				</td>
+		</table>
+    <!-- <select id="layout"> -->
+    <!--     <option value="circle">Circle</option> -->
+    <!--     <option value="line">Line</option> -->
+    <!--     <option value="radiate">Radiate</option> -->
+    <!--     <option value="naview">NAView</option> -->
+        <!-- <option value="turtle">Turtle</option> -->
+        <!-- <option value="puzzler">Puzzler</option> -->
+    <!-- </select> -->
+
+		<script>
+			function draw() {
+				let ss = document.getElementById('ss').value;
+				let layouts = ['circle', 'line', 'radiate', 'naview', 'turtle', 'puzzler'];
+				// let layouts = ['circle', 'line'];
+				for (let i = 0; i < layouts.length; i++) {
+					let layout = layouts[i];
+					let vConfig = new varnajs.VARNAConfig({
+						layout: layout,
+						baseInnerColor: "red",
+						spaceBetweenBases: 2,
+						drawBackbone: false,
+					});
+					let v = varnajs.drawRNA(document.getElementById(layout), ss, "", vConfig);
+				}
+			}
+		</script>
+	</body>

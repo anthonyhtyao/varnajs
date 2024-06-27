@@ -1,0 +1,10 @@
+{
+  "source": {
+    "include" : ["src"],
+    "exclude" : ["src/layouts", "src/utils"]
+  },
+  
+  "opts": {
+    "destination": "./docs"
+  }
+}
