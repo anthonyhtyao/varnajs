@@ -23,6 +23,7 @@ const STERICITY = Object.freeze({
 
 /**
  * Convert edge label to edge type
+ * @private
  * @param {string} label - edge label
  */
 function parseEdge(label) {
@@ -40,6 +41,7 @@ function parseEdge(label) {
 
 /**
  * Convert stericity label to stericity type
+ * @private
  * @param {string} label - stericity label
  */
 function parseStericity(label) {

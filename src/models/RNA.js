@@ -528,6 +528,7 @@ export class RNA {
 
 /**
  * Return true to show number of given base
+ * @private
  *
  * @param {ModelBase} mb - base in ModelBase
  * @param {int} period - base number period

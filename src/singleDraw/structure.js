@@ -6,8 +6,11 @@ import { RNA } from "../models/RNA";
 import { ModelBP } from "../models/modelBP";
 
 
+/**
+ * Draw a structure
+ * @extends RNA
+ */
 export class Structure extends RNA {
-
 
 	/**
 	 * Create Drawing from ebi basepair interaction json
