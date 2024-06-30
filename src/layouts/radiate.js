@@ -16,7 +16,6 @@ let drawRadiate = function(baseList, varnaCfg){
 		coords[i] = {x: 0, y: 0};
 		centers[i] = {x: 0, y: 0};
 	}
-	console.log(varnaCfg);
 	if (varnaCfg.flatExteriorLoop) {
 		dirAngle += 1 - Math.PI / 2.0;
 		let i = 0;
@@ -63,7 +62,7 @@ let drawLoop = function(i, j, x, y, dirAngle, coords, centers, angles, baseList,
 	let BASE_PAIR_DISTANCE = varnaCfg.bpDistance;
 	let LOOP_DISTANCE = varnaCfg.backboneLoop;
 	let MULTILOOP_DISTANCE = varnaCfg.backboneMultiLoop;
-	let straightBulges = true;
+	let straightBulges = varnaCfg.straightBulges;
 	// BasePaired
 	if (baseList[i].getPartnerInd() == j) {
 		let normalAngle = Math.PI / 2.0;
