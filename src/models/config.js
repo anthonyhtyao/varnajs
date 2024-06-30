@@ -45,6 +45,7 @@ export const BASEPAIR_THICKNESS_DEFAULT = 1;
  * @property {int} bpDistance - distance between paired bases (length of canonical basepair)
  * @property {int} backboneLoop - backbone distance within a loop (radiate, turtle, puzzler)
  * @property {int} backboneMultiLoop - backbone distance within a multiloop for radiate layout
+ * @property {bool} flatExteriorLoop - draw flat exterior loop in radiate mode
  * @property {string} baseNameColor - color of base name, i.e. nucleotide (default: rgb(64, 64, 64))
  * @property {string} baseInnerColor - color to fill base (default: rgb(242, 242, 242))
  * @property {string} baseOutlineColor - color of base border (default: rgb(91, 91, 91))
@@ -67,6 +68,7 @@ export class VARNAConfig {
 	bpDistance = 65;
 	backboneLoop = 40;
 	backboneMultiLoop = 35;
+	flatExteriorLoop = false;
 	
 	// Base label
 	baseNameColor = BASE_NAME_COLOR_DEFAULT;
