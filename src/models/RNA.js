@@ -451,7 +451,7 @@ export class RNA {
 						edgeEl.style = {};
 					}
 					let factor = (cfg.bpLowerPlane) ? 1 : -1;
-					edgeEl.style["control-point-distance"] = factor * (bp.partner3.ind-bp.partner5.ind)*20;
+					edgeEl.style["control-point-distance"] = factor * bp.vIncrement(cfg.bpIncrement);  
 				}
 				res.push(edgeEl);
 			}
@@ -475,7 +475,7 @@ export class RNA {
 					edgeEl.style = {};
 				}
 				let factor = (cfg.bpLowerPlane) ? 1 : -1;
-				edgeEl.style["control-point-distance"] = factor * (bp.partner3.ind-bp.partner5.ind)*20;
+				edgeEl.style["control-point-distance"] = factor * bp.vIncrement(cfg.bpIncrement);
 			}
 			res.push(edgeEl);
 		}
@@ -489,9 +489,12 @@ export class RNA {
 		let cfg = this.cfg;
 		let res = [];
 		let generalStyle = cfg.bpCyStyle(this.getSelector("edge.basepair"));
+		generalStyle["data"] = {layout: cfg.layout};
 		if (cfg.layout == Layouts.LINE) {
 			generalStyle.style["curve-style"] = "unbundled-bezier";
 			generalStyle.style["control-point-weight"] = 0.5;
+			generalStyle.style["source-endpoint"] = "0 -10";
+			generalStyle.style["target-endpoint"] = "0 -10";
 		}
 		res.push(generalStyle);
 		return res;

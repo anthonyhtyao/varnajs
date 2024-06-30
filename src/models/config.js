@@ -47,6 +47,7 @@ export const BASEPAIR_THICKNESS_DEFAULT = 1;
  * @property {int} backboneMultiLoop - backbone distance within a multiloop for radiate layout
  * @property {bool} flatExteriorLoop - draw flat exterior loop in radiate mode (default: true)
  * @property {bool} straightBulges - draw straight bulge in radiate mode (default: false)
+ * @property {float} bpIncrement - vertical increment in line mode (default: 0.65)
  * @property {string} baseNameColor - color of base name, i.e. nucleotide (default: rgb(64, 64, 64))
  * @property {string} baseInnerColor - color to fill base (default: rgb(242, 242, 242))
  * @property {string} baseOutlineColor - color of base border (default: rgb(91, 91, 91))
@@ -70,7 +71,8 @@ export class VARNAConfig {
 	backboneLoop = 40;
 	backboneMultiLoop = 35;
 	flatExteriorLoop = true;
-	straightBulges = false
+	straightBulges = false;
+	bpIncrement = 0.65;
 	
 	// Base label
 	baseNameColor = BASE_NAME_COLOR_DEFAULT;

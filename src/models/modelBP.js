@@ -137,4 +137,13 @@ export class ModelBP {
 		}
 	return el;
 	}
+
+	vIncrement(bpIncrement) {
+		let coeff = 1;
+		if (this.partner3.ind - this.partner5.ind == 1) {
+			// We need a negative value due to bezier edge strange behavior for adjacent nodes
+			coeff = -2;
+		}
+		return coeff * bpIncrement * (this.partner3.getCoords().x - this.partner5.getCoords().x);
+	}
 }

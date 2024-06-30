@@ -1,6 +1,7 @@
 import cytoscape from 'cytoscape';
 import { Layouts } from '../models/config';
 import { MultiDraw } from './multiDraw';
+import { drawBases } from '../layouts/layout';
 
 export class PlaneCompare extends MultiDraw {
 	rnaLimit = 2;
@@ -27,10 +28,18 @@ export class PlaneCompare extends MultiDraw {
 		let cyBase = rna1.createCyFormat();
 		cyBase["container"] = container;
 		// We only need bp from the second RNA and need to modify source and target
+		drawBases(rna2.baseList, rna1.cfg);
 		let rna2BP = rna2.cyOfBPs();
 		rna2BP.el.forEach((bp) => {
 			bp.data.source = bp.data.source.replace(rna2.name, rna1.name);
 			bp.data.target = bp.data.target.replace(rna2.name, rna1.name);
+		});
+		rna2BP.style.forEach((bp) => {
+			if (bp.data.layout == Layouts.LINE) { 
+			  bp.style["source-endpoint"] = "0 10";
+			  bp.style["target-endpoint"] = "0 10";
+			  console.log(bp);
+			}
 		});
 		cyBase.elements.push(...rna2BP.el);
 		cyBase.style.push(...rna2BP.style);
