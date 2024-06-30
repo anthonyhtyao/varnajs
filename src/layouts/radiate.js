@@ -9,14 +9,42 @@ let drawRadiate = function(baseList, varnaCfg){
 	var angles = [];
 	let dirAngle = -1;
 	let spaceBetweenBases = varnaCfg.spaceBetweenBases;
+	let BASE_PAIR_DISTANCE = varnaCfg.bpDistance;
+	let MULTILOOP_DISTANCE = varnaCfg.backboneMultiLoop;
 
 	for (let i = 0; i < baseList.length; i++) {
 		coords[i] = {x: 0, y: 0};
 		centers[i] = {x: 0, y: 0};
 	}
-	// TODO: Flat exteriorloop
-	// Currently we ignore flat exteriorloop
-	drawLoop(0, baseList.length - 1, 0, 0, dirAngle, coords, centers, angles, baseList, varnaCfg);
+	if (varnaCfg.flatExteriorLoop) {
+		dirAngle += 1 - Math.PI / 2.0;
+		let i = 0;
+		let x = 0.0, y = 0.0;
+		let vx = - Math.sin(dirAngle), vy = Math.cos(dirAngle);
+		while (i < baseList.length) {
+			coords[i].x = x;
+			coords[i].y = y;
+			centers[i].x = x + BASE_PAIR_DISTANCE * vy;
+			centers[i].y = y + BASE_PAIR_DISTANCE * vx;
+			let j = baseList[i].getPartnerInd();
+			if (j > i) {
+				drawLoop(i, j, x + (BASE_PAIR_DISTANCE * vx / 2.0), y + (BASE_PAIR_DISTANCE * vy / 2.0),
+					dirAngle, coords, centers, angles, baseList, varnaCfg);
+				centers[i].x = coords[i].x + BASE_PAIR_DISTANCE * vy;
+				centers[i].y = y - BASE_PAIR_DISTANCE * vx;
+				i = j;
+				x += BASE_PAIR_DISTANCE * vx;
+				y += BASE_PAIR_DISTANCE * vy;
+				centers[i].x = coords[i].x + BASE_PAIR_DISTANCE * vy;
+				centers[i].y = y - BASE_PAIR_DISTANCE * vx;
+			}
+			x += MULTILOOP_DISTANCE * vx;
+			y += MULTILOOP_DISTANCE * vy;
+			i += 1;
+		}
+	} else {
+		drawLoop(0, baseList.length - 1, 0, 0, dirAngle, coords, centers, angles, baseList, varnaCfg);
+	}
 
 	for (let i = 0; i < coords.length; i++) {
 		coords[i].x *= spaceBetweenBases;
@@ -34,7 +62,7 @@ let drawLoop = function(i, j, x, y, dirAngle, coords, centers, angles, baseList,
 	let BASE_PAIR_DISTANCE = varnaCfg.bpDistance;
 	let LOOP_DISTANCE = varnaCfg.backboneLoop;
 	let MULTILOOP_DISTANCE = varnaCfg.backboneMultiLoop;
-	let straightBulges = true;
+	let straightBulges = varnaCfg.straightBulges;
 	// BasePaired
 	if (baseList[i].getPartnerInd() == j) {
 		let normalAngle = Math.PI / 2.0;
