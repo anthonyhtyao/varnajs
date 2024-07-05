@@ -61,6 +61,7 @@ export const BASEPAIR_THICKNESS_DEFAULT = 1;
  * @property {bool} bpLowerPlane - draw basepair in lower plane in linear layout (default: false)
  * @property {bool} drawBases - base visibility (default: true)
  * @property {bool} drawBacbone - backbone visibility (default: true)
+ * @property {bool} drawParentNode - create Cytoscape compound node for RNA (default: false)
  * @property {Puzzler} puzzler - puzzler setting
  */
 export class VARNAConfig {
@@ -95,6 +96,10 @@ export class VARNAConfig {
 	// Visibility 
 	drawBases = true;
 	drawBackbone = true;
+
+	// Cytoscape specific configuration
+	drawParentNode = false;
+
 	// RNApuzzler config
 	puzzler = new Puzzler();
 	

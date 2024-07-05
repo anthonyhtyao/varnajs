@@ -6,8 +6,10 @@ import { drawBases } from '../layouts/layout';
 import { Layouts, VARNAConfig } from './config';
 import { ptableFromDBN, parseSeq } from '../utils/RNA';
 import { DiscontinuousBackbone } from './modelBackbone';
+import { BoundingBox } from '../utils/model';
 
 const DBNStrandSep = "&";
+const BaseRadius = 10;
 
 /**
  * Simple dot-bracket notation parser
@@ -135,24 +137,30 @@ export class RNA {
 	}
 
 	getCyId(id, type) {
-		let newId = (this.name === null) ? "" : `${this.name}_`;
+		let newId = (this.name === null) ? [] : [`${this.name}`];
 		switch (type) {
 			case "base":
-				newId += "";
+				// newId += "";
 				break;
 			case "backbone":
-				newId += "backbone_";
+				newId.push("backbone");
 				break;
 			case "planar":
-				newId += "planarbp_";
+				newId.push("planarbp");
 				break;
 			case "aux":
-				newId += "auxbp_";
+				newId.push("auxbp");
+				break;
+			case "parent":
+				newId.push("parent");
 				break;
 			default:
 				throw new Error(`Unknown type: ${type}`);
 		}
-		return newId + id;
+		if (id !== null) {
+			newId.push(id);
+		}
+		return newId.join("_");
 	}
 
 	/*
@@ -278,6 +286,18 @@ export class RNA {
 	 */
 	elOfBases() {
 		let res = [];
+		let parent = null;
+		// Create compound node if needed
+		if (this.cfg.drawParentNode) {
+			parent = {
+				data: {
+					id: this.getCyId(null, "parent"),
+				},
+				classes: ["parentNode"],
+			}
+			res.push(parent);
+		}
+		
 		for (let i = 0; i < this.baseList.length; ++i) {
 			let base = this.baseList[i];
 			let baseEl = {
@@ -287,6 +307,9 @@ export class RNA {
 					num: base.getBaseNum()
 				}
 			};
+			if (parent !== null) {
+				baseEl.data.parent = this.getCyId(null, "parent");
+			}
 			// Set custom base classes
 			baseEl['classes'] = [...base.classes];
 			if (this.name !== null) {
@@ -527,6 +550,17 @@ export class RNA {
 		return cyDist;	
 	}
 
+	/**
+	 * Return RNA drawing bounding box
+	 * Make sure each base coords is computed in prior
+	 */
+	getBoundingBox() {
+		let r = BaseRadius;
+		let c = this.baseList[0].getCoords();
+		let bbox = BoundingBox(c.x - r, c.x + r, c.y - r, c.y + r);
+		this.baseList.forEach((base) => bbox.updateFromCoords(base.getCoords(), r));
+		return bbox;
+	}
 }
 
 /**

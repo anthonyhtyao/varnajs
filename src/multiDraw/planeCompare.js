@@ -7,6 +7,13 @@ export class PlaneCompare extends MultiDraw {
 	rnaLimit = 2;
 	constructor (rna1, rna2) {
 		super();
+		// Set RNA name if not set yet
+		if (rna1.name === null) {
+			rna1.name = "rnaupper";
+		}
+		if (rna2.name === null) {
+			rna2.name = "rnalower";
+		}
 		this.addRNA(rna1);
 		this.addRNA(rna2);
 	}
@@ -17,13 +24,6 @@ export class PlaneCompare extends MultiDraw {
 		// Force RNA1 is in upper plane and RNA2 in lower plane
 		rna1.cfg.set({bpLowerPlane: false, layout: Layouts.LINE});
 		rna2.cfg.set({bpLowerPlane: true, layout: Layouts.LINE});
-		// Set RNA name if not set yet
-		if (rna1.name === null) {
-			rna1.name = "rnaupper";
-		}
-		if (rna2.name === null) {
-			rna2.name = "rnalower";
-		}
 
 		let cyBase = rna1.createCyFormat();
 		cyBase["container"] = container;

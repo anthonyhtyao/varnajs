@@ -22,6 +22,9 @@ export class MultiDraw {
 			// TODO: add warning
 			return -1;
 		}
+		if (rna.name === null) {
+			rna.name = `RNA${this.getRNACount()}`;
+		}
 		this.rnaList.push(rna);
 		return this.getRNACount() - 1;
 	}
