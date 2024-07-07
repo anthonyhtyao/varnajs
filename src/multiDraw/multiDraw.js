@@ -44,6 +44,14 @@ export class MultiDraw {
 	}
 
 	/**
+	 * Compute position of each RNA
+	 * @param {RNA} rna - RNA of interest
+	 */
+	positionOfRNA(RNA) {
+		return {x: 0, y: 0};
+	}
+
+	/**
 	 * @abstract
 	 */
 	createCy(container) {

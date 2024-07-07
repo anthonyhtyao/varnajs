@@ -1,6 +1,7 @@
 export * from "./models/index";
 export * from "./singleDraw/index";
 export * from "./multiDraw/index";
+import pack from "pack";
 import { VARNAConfig } from "./models/config";
 import { Structure } from "./singleDraw/structure";
 
@@ -19,3 +20,7 @@ export function drawRNA(container, dbn, seq="", varnaCfg=(new VARNAConfig())) {
 	return v;
 }
 
+
+export function packTest(lst) {
+	return pack(lst);
+}

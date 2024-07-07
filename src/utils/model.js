@@ -17,4 +17,9 @@ export class BoundingBox {
 		this.yMin = Math.min(this.yMin, coords.y - radius);
 		this.yMax = Math.max(this.yMax, coords.y + radius);
 	}
+
+	getSize() {
+		return {w: this.xMax - this.xMin, h: this.yMax - this.yMin};
+	}
+
 } 

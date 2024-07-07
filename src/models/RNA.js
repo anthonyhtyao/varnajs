@@ -557,7 +557,7 @@ export class RNA {
 	getBoundingBox() {
 		let r = BaseRadius;
 		let c = this.baseList[0].getCoords();
-		let bbox = BoundingBox(c.x - r, c.x + r, c.y - r, c.y + r);
+		let bbox = new BoundingBox(c.x - r, c.x + r, c.y - r, c.y + r);
 		this.baseList.forEach((base) => bbox.updateFromCoords(base.getCoords(), r));
 		return bbox;
 	}
