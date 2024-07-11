@@ -115,11 +115,11 @@ export class ModelBP {
 	/**
 	 * Return basepair as cytoscape edge element
 	 */
-	toCyElement() {
+	toCyEl() {
 		let el = {
 			"data": {
-				"source": this.partner5.ind,
-				"target": this.partner3.ind,
+				"source": this.partner5.getId(),
+				"target": this.partner3.getId(),
 				"label": this.getType()
 			},
 			"classes": ["basepair"],

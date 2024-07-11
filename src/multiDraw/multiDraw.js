@@ -6,6 +6,7 @@ import { RNA } from "../models/RNA";
 export class MultiDraw {
 	rnaList = [];
 	rnaLimit = null;
+	auxBPs = [];
 	constructor () {
 	}
 
@@ -50,6 +51,18 @@ export class MultiDraw {
 	positionOfRNA(RNA) {
 		return {x: 0, y: 0};
 	}
+
+	/**
+	 * Add basepair interaction between two RNAs
+	 * @param {ModelBase} basei - base i in ModelBase
+	 * @param {ModelBase} basej - base j in ModelBase
+	 * @param {Object} opt - options to create ModelBP
+	 */
+	addInterBP(basei, basej, opt={}) {
+		let mbp = new ModelBP(basei, basej, opt);
+		this.auxBPs.push(mbp);
+	}
+
 
 	/**
 	 * @abstract

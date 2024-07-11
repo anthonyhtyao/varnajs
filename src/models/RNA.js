@@ -7,6 +7,7 @@ import { Layouts, VARNAConfig } from './config';
 import { ptableFromDBN, parseSeq } from '../utils/RNA';
 import { DiscontinuousBackbone } from './modelBackbone';
 import { BoundingBox } from '../utils/model';
+import { getCyId } from '../utils/cy';
 
 const DBNStrandSep = "&";
 const BaseRadius = 10;
@@ -89,7 +90,7 @@ export class RNA {
 		// Fill baseList
 		rna.baseList = new Array(ptable.length);
 		for (let i = 0; i < ptable.length; i++) {
-			let base = new ModelBase(i, i+1, seqFinal[i]);
+			let base = new ModelBase(i, i+1, seqFinal[i], rna);
 			// Next base belongs to another strand:w
 			//
 			if (sepPosLst.indexOf(i) >= 0) {
@@ -291,7 +292,7 @@ export class RNA {
 		if (this.cfg.drawParentNode) {
 			parent = {
 				data: {
-					id: this.getCyId(null, "parent"),
+					id: getCyId(this.name, null, "parent"),
 				},
 				classes: ["parentNode"],
 			}
@@ -300,31 +301,10 @@ export class RNA {
 		
 		for (let i = 0; i < this.baseList.length; ++i) {
 			let base = this.baseList[i];
-			let baseEl = {
-				data: {
-					id: this.getCyId(base.ind, "base"),
-					label: base.c,
-					num: base.getBaseNum()
-				}
-			};
+			let baseEl = base.toCyEl(isNumberDrawn(base, this.cfg.baseNumPeriod, this.baseList.length));
 			if (parent !== null) {
-				baseEl.data.parent = this.getCyId(null, "parent");
+				baseEl.data.parent = parent.data.id;
 			}
-			// Set custom base classes
-			baseEl['classes'] = [...base.classes];
-			if (this.name !== null) {
-				baseEl['classes'].push(this.name);
-			}
-			// Add baseNum class for node to draw base number
-			if (isNumberDrawn(base, this.cfg.baseNumPeriod, this.baseList.length)) {
-				baseEl["classes"].push("baseNum");
-			}
-			// Add class for base style
-			if (base.style !== null) {
-				baseEl["classes"].push(`basegroup${base.style.getId()}`);
-				baseEl["data"]["baseNumColor"] = base.style.baseNumColor;
-			}
-			baseEl['position'] = base.getCoords();
 			res.push(baseEl);
 		}
 		return res;
@@ -399,9 +379,9 @@ export class RNA {
 			if (backbone != DiscontinuousBackbone) {
 				let el = {
 					"data": {
-						id: this.getCyId(i, 'backbone'),
-						source: this.getCyId(i, 'base'),
-						target: this.getCyId(i+1, 'base')
+						id: getCyId(this.name, i, 'backbone'),
+						source: getCyId(this.name, i, 'base'),
+						target: getCyId(this.name, i+1, 'base')
 					},
 					"classes": ["backbone"]
 				};
@@ -444,14 +424,10 @@ export class RNA {
 	 * Returns cytoscape edge element for one single bp
 	 */
 	elOfSingleBP(bp) {
-		let edgeEl = bp.toCyElement();
+		let edgeEl = bp.toCyEl();
 		if (this.name !== null) {
 			edgeEl.classes.push(this.name);
 		}
-		// Here, we need to correct source and target base id
-		edgeEl.data.source = this.getCyId(edgeEl.data.source, "base");
-		edgeEl.data.target = this.getCyId(edgeEl.data.target, "base");
-
 		return edgeEl;
 	}
 
@@ -467,7 +443,7 @@ export class RNA {
 			if (j > base.ind) {
 				let bp = base.getBP();
 				let edgeEl = this.elOfSingleBP(bp);
-				edgeEl.data.id = this.getCyId(base.ind, "planar");
+				edgeEl.data.id = getCyId(this.name, base.ind, "planar");
 				edgeEl.classes.push("planarbp");
 				if (cfg.layout == Layouts.LINE) {
 					if (_.isUndefined(edgeEl.style)) {
@@ -491,7 +467,7 @@ export class RNA {
 		for (let i = 0; i < this.auxBPs.length; i++) {
 			let bp = this.auxBPs[i];
 			let edgeEl = this.elOfSingleBP(bp);
-			edgeEl.data.id = this.getCyId(i, "aux");
+			edgeEl.data.id = getCyId(this.name, i, "aux");
 			edgeEl.classes.push("auxbp");
 			if (cfg.layout == Layouts.LINE) {
 				if (_.isUndefined(edgeEl.style)) {
@@ -512,13 +488,6 @@ export class RNA {
 		let cfg = this.cfg;
 		let res = [];
 		let generalStyle = cfg.bpCyStyle(this.getSelector("edge.basepair"));
-		generalStyle["data"] = {layout: cfg.layout};
-		if (cfg.layout == Layouts.LINE) {
-			generalStyle.style["curve-style"] = "unbundled-bezier";
-			generalStyle.style["control-point-weight"] = 0.5;
-			generalStyle.style["source-endpoint"] = "0 -10";
-			generalStyle.style["target-endpoint"] = "0 -10";
-		}
 		res.push(generalStyle);
 		return res;
 	}

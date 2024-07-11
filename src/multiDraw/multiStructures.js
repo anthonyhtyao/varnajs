@@ -83,6 +83,7 @@ export class MultiStructures extends MultiDraw {
 		if (this.cfg.autoParentPos) {
 			this.packRNAs();
 		}
+		console.log(cyDist);
 		var cy = cytoscape(cyDist);
 		this.cy = cy;
 		let parents = this.cy.nodes('.parentNode');
