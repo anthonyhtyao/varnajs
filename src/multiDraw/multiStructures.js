@@ -1,12 +1,16 @@
+import _ from 'lodash';
 import cytoscape from 'cytoscape';
 import pack from 'pack';
+import { RNA } from '../models/RNA';
 import { MultiDraw } from './multiDraw';
 import { VARNAConfig } from "../models/config";
+import { toFactor } from '../utils/factor';
 
 /**
  * Multi structures configuration extended from default config
  */
 export class MultiConfig extends VARNAConfig {
+	autoParentPos=true;
 	parentNodePadding=10;
 	parentNodeMargin=10;
 
@@ -17,16 +21,13 @@ export class MultiConfig extends VARNAConfig {
 }
 
 export class MultiStructures extends MultiDraw {
-	nCols;
-	nRows;
 	positions = [];
 	cfg = new MultiConfig();
-	constructor (nCols=null, nRows=null) {
-		super();
-	 	this.nCols = nCols;
-		this.nRows = nRows;
-	}
 
+	// TODO: Implement a more sophistic one
+	/**
+	 * Compute each RNA position using simple rectangle packing algorithm with pack (npm)
+	 */
 	packRNAs() {
 		let padding = this.cfg.parentNodePadding;
 		let margin = this.cfg.parentNodeMargin;
@@ -39,11 +40,22 @@ export class MultiStructures extends MultiDraw {
 		this.positions = pack(rnaSizes).boxes.map((pos) => ({x: pos.position[0] + margin, y: - pos.position[1] - margin}));
 	}
 
-	positionOfRNA(rna) {
-		if (this.positions.length < this.rnaList.length) {
-			packRNAs();
+	/**
+	 * Get parent node position of given RNA
+	 * @param {RNA|int} rna - RNA or index of interest
+	 */
+	getPosOfRNA(rna) {
+		let ind;
+		if (Number.isInteger(rna)) {
+			ind = rna;
+		} else if (rna instanceof RNA) {
+		  ind = this.rnaList.indexOf(rna);
+		} else {
+			throw new Error("Input should be either an integer or an instance of RNA");
 		}
-		return this.positions[this.rnaList.indexOf(rna)];
+
+		// Note: this could be undefined
+		return this.positions[ind];
 	}
 
 	createCy(container) {
@@ -68,19 +80,25 @@ export class MultiStructures extends MultiDraw {
 				"border-opacity": 0,
 		  },
 		});
-		this.packRNAs();
+		if (this.cfg.autoParentPos) {
+			this.packRNAs();
+		}
 		var cy = cytoscape(cyDist);
 		this.cy = cy;
 		let parents = this.cy.nodes('.parentNode');
 		for (let i = 0; i < parents.length; i++) {
+			let end = this.getPosOfRNA(i);
+			// no shift
+			if (_.isUndefined(end)) {
+				continue;
+			}
 			let bbox = this.rnaList[i].getBoundingBox();
-			let r = 10;
 			// we need this pos to be moved to rectangle packer result
-			let pos = {
+			let start = {
 				x: bbox.xMin - this.cfg.parentNodePadding,
 				y: bbox.yMax + this.cfg.parentNodePadding,
 			};
-			parents[i].shift({x: this.positions[i].x - pos.x, y: this.positions[i].y - pos.y});
+			parents[i].shift(toFactor(start, end));
 		}
 		this.cy.fit();
 	}
