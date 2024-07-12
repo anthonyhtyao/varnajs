@@ -185,6 +185,14 @@ export class VARNAConfig {
 		}
 		return style;
 	}
+
+	/**
+	 * Simple function to create general style
+	 * This function calls each style function with default argument
+	 */
+	generalCyStyle() {
+		return [this.baseCyStyle(), this.backboneCyStyle(), this.bpCyStyle()];
+	}
 }
 
 

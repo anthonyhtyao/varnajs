@@ -1,4 +1,6 @@
 import { RNA } from "../models/RNA";
+import { getCyId } from "../utils/cy";
+import { ModelBP } from "../models/modelBP";
 
 /**
  * Genreal Multi RNA Draw class
@@ -61,6 +63,18 @@ export class MultiDraw {
 	addInterBP(basei, basej, opt={}) {
 		let mbp = new ModelBP(basei, basej, opt);
 		this.auxBPs.push(mbp);
+	}
+
+	elOfInterBPs() {
+		let res = [];
+		for (let i = 0; i < this.auxBPs.length; i++) {
+			let bp = this.auxBPs[i];
+			let bpEl = bp.toCyEl();
+			bpEl.data.id = getCyId(null, i, "aux");
+			bpEl.classes.push("auxbp");
+			res.push(bpEl);
+		}
+		return res;
 	}
 
 

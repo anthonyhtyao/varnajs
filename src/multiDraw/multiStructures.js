@@ -62,7 +62,7 @@ export class MultiStructures extends MultiDraw {
 		let cyDist = {
 			'container': container,
 			'elements': [],
-			'style': [],
+			'style': this.cfg.generalCyStyle(),
 			'layout': {'name': 'preset'},
 		};
 		this.rnaList.forEach((rna) => {
@@ -83,7 +83,7 @@ export class MultiStructures extends MultiDraw {
 		if (this.cfg.autoParentPos) {
 			this.packRNAs();
 		}
-		console.log(cyDist);
+		cyDist.elements.push(...this.elOfInterBPs());
 		var cy = cytoscape(cyDist);
 		this.cy = cy;
 		let parents = this.cy.nodes('.parentNode');
