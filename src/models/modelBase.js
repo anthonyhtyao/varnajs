@@ -23,18 +23,32 @@ export class ModelBase {
 	style = null;
 	bacbone = DefaultBackbone;
 	classes = [];
+	group = null;
 	constructor(ind, bn, label, rna=null) {
 		this.ind = ind;
 		this.realInd = bn;
 		this.c = label;
-		this.rna = rna;
+		this.group = rna;
 	}
 
 	/**
-	 * Get Id of base
+	 * Define base id
+	 * @param {string} id - base id
+	 */
+	setId(id) {
+		this.id = id;
+	}
+
+	/**
+	 * Get base id
+	 * returns default id if base id is undefined
 	 */
 	getId() {
-		return getCyId(this.rna.name, this.ind, 'base');
+		if (_.isUndefined(this.id)) {
+			let groupname = (this.group === null) ? null : this.group.getName();
+			return getCyId(groupname, this.ind, 'base');
+		}
+		return this.id;
 	}
 
 	/**
@@ -121,8 +135,8 @@ export class ModelBase {
 		};
 		// Set base classes
 		el['classes'] = [...this.classes];
-		if (this.rna.name !== null) {
-			el['classes'].push(this.rna.name);
+		if (this.group.getName() !== null) {
+			el['classes'].push(this.group.getName());
 		}
 		// Add baseNum class for node to draw base number
 		if (withNum) {

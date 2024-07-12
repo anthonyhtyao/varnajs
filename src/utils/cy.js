@@ -11,6 +11,9 @@ export function	getCyId(rnaname, id, type, sep="_") {
 		case "backbone":
 			newId.push("backbone");
 			break;
+		case "bp":
+			newId.push("basepair");
+			break;
 		case "planar":
 			newId.push("planarbp");
 			break;

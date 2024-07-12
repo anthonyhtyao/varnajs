@@ -1,7 +1,7 @@
 import _ from "lodash";
 
 import { ModelBase, ModelBaseStyle } from './modelBase';
-import { ModelBP } from './modelBP';
+import { PlanarBP, AuxBP } from './modelBP';
 import { drawBases } from '../layouts/layout';
 import { Layouts, VARNAConfig } from './config';
 import { ptableFromDBN, parseSeq } from '../utils/RNA';
@@ -112,6 +112,22 @@ export class RNA {
 		return rna;
 	}
 
+	/**
+	 * Set RNA name
+	 * @param {string} name - object name
+	 */
+	setName(name) {
+		this.name = name;
+	}
+
+	/**
+	 * Get RNA name
+	 */
+	getName(name) {
+		// TODO: include multi rna name if exist
+		return this.name;
+	}
+
 
 	/**
 	 * Set drawing configuration
@@ -191,7 +207,8 @@ export class RNA {
 	addBP(i, j, opt={}) {
 		let basei = this.getBase(i), basej = this.getBase(j);
 		// Create ModelBP object for basepair
-		let mbp = new ModelBP(basei, basej, opt);
+		let mbp = new AuxBP(basei, basej, opt);
+		mbp.group = this;
 		let indi, indj;
 		[indi, indj] = [Math.min(basei.ind, basej.ind), Math.max(basei.ind, basej.ind)]
 		// Add directly to aux
@@ -211,7 +228,7 @@ export class RNA {
 					}
 				}
 			}
-			this.addBPNow(basei, basej, mbp);
+			this.addBPNow(basei, basej, opt);
 		}
 	}
 
@@ -222,17 +239,15 @@ export class RNA {
 	addBPAux(i, j, mbp=null) {
 		let basei = this.getBase(i), basej = this.getBase(j);
 		if (mbp === null) {
-			mbp = new ModelBP(basei, basej);
+			mbp = new AuxBP(basei, basej);
 		}
 		this.auxBPs.push(mbp);
 	}
 
 
-	addBPNow(i, j, mbp=null) {
+	addBPNow(i, j, opt={}) {
 		let basei = this.getBase(i), basej = this.getBase(j);
-		if (mbp === null) {
-			mbp = new ModelBP(basei, basej);
-		}
+		let mbp = new PlanarBP(basei, basej, opt);
 		basei.setBP(mbp);
 		basej.setBP(mbp);
 	}
@@ -442,6 +457,7 @@ export class RNA {
 			let j = base.getPartnerInd();
 			if (j > base.ind) {
 				let bp = base.getBP();
+				bp.ind = base.ind;
 				let edgeEl = this.elOfSingleBP(bp);
 				edgeEl.data.id = getCyId(this.name, base.ind, "planar");
 				edgeEl.classes.push("planarbp");
@@ -466,8 +482,9 @@ export class RNA {
 		let res = [];
 		for (let i = 0; i < this.auxBPs.length; i++) {
 			let bp = this.auxBPs[i];
+			bp.ind = i;
 			let edgeEl = this.elOfSingleBP(bp);
-			edgeEl.data.id = getCyId(this.name, i, "aux");
+			// edgeEl.data.id = getCyId(this.name, i, "aux");
 			edgeEl.classes.push("auxbp");
 			if (cfg.layout == Layouts.LINE) {
 				if (_.isUndefined(edgeEl.style)) {
