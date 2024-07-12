@@ -2,6 +2,7 @@ import _ from "lodash";
 
 import { ModelBP } from './modelBP';
 import { DefaultBackbone } from './modelBackbone';
+import { getCyId } from '../utils/cy';
 
 /**
  * ModelBase represents one base in RNA
@@ -22,10 +23,18 @@ export class ModelBase {
 	style = null;
 	bacbone = DefaultBackbone;
 	classes = [];
-	constructor(ind, bn, label) {
+	constructor(ind, bn, label, rna=null) {
 		this.ind = ind;
 		this.realInd = bn;
 		this.c = label;
+		this.rna = rna;
+	}
+
+	/**
+	 * Get Id of base
+	 */
+	getId() {
+		return getCyId(this.rna.name, this.ind, 'base');
 	}
 
 	/**
@@ -100,6 +109,32 @@ export class ModelBase {
 
 	addCustomClass(inst) {
 		this.classes.push(inst);
+	}
+
+	toCyEl(withNum) {
+		let el = {
+			data: {
+				id: this.getId(),
+				label: this.c,
+				num: this.getBaseNum()
+			}
+		};
+		// Set base classes
+		el['classes'] = [...this.classes];
+		if (this.rna.name !== null) {
+			el['classes'].push(this.rna.name);
+		}
+		// Add baseNum class for node to draw base number
+		if (withNum) {
+			el["classes"].push("baseNum");
+		}
+		// Add class for base style
+		if (this.style !== null) {
+			el["classes"].push(`basegroup${this.style.getId()}`);
+			el["data"]["baseNumColor"] = this.style.baseNumColor;
+		}
+		el['position'] = this.getCoords();
+		return el;
 	}
 }
 

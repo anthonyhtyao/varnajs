@@ -61,6 +61,7 @@ export const BASEPAIR_THICKNESS_DEFAULT = 1;
  * @property {bool} bpLowerPlane - draw basepair in lower plane in linear layout (default: false)
  * @property {bool} drawBases - base visibility (default: true)
  * @property {bool} drawBacbone - backbone visibility (default: true)
+ * @property {bool} drawParentNode - create Cytoscape compound node for RNA (default: false)
  * @property {Puzzler} puzzler - puzzler setting
  */
 export class VARNAConfig {
@@ -95,6 +96,10 @@ export class VARNAConfig {
 	// Visibility 
 	drawBases = true;
 	drawBackbone = true;
+
+	// Cytoscape specific configuration
+	drawParentNode = false;
+
 	// RNApuzzler config
 	puzzler = new Puzzler();
 	
@@ -147,7 +152,7 @@ export class VARNAConfig {
 	 * Create general cytoscape style for backbone
 	 * @param {string} selector - backbone selector (default: "edge.backbone")
 	 */
-	backboneCyStyle(selector="edge.bacbone") {
+	backboneCyStyle(selector="edge.backbone") {
 		let style = {
     	"selector": `${selector}`,
 			"style": {
@@ -163,15 +168,30 @@ export class VARNAConfig {
 	 * Create general cytoscape style forbasepair 
 	 * @param {string} selector - basepair selector (default: "edge.basepair")
 	 */
-	bpCyStyle(selector="edge.bacbone") {
+	bpCyStyle(selector="edge.basepair") {
 		let style = {
     	"selector": `${selector}`,
 			"style": {
 				"line-color": this.bpColor,
 				"width": this.bpThickness,
-			}
+			},
+			"data": {layout: this.layout},
+		}
+		if (this.layout == Layouts.LINE) {
+			style.style["curve-style"] = "unbundled-bezier";
+			style.style["control-point-weight"] = 0.5;
+			style.style["source-endpoint"] = "0 -10";
+			style.style["target-endpoint"] = "0 -10";
 		}
 		return style;
+	}
+
+	/**
+	 * Simple function to create general style
+	 * This function calls each style function with default argument
+	 */
+	generalCyStyle() {
+		return [this.baseCyStyle(), this.backboneCyStyle(), this.bpCyStyle()];
 	}
 }
 

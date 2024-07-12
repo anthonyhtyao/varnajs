@@ -31,7 +31,8 @@
     "cytoscape": "^3.29.2",
     "cytoscape-html-label": "^1.1.7",
     "lodash": "^4.17.21",
-    "math-float64-signbit": "^1.0.0"
+    "math-float64-signbit": "^1.0.0",
+    "pack": "^2.2.0"
   },
   "devDependencies": {
     "@rollup/plugin-babel": "^6.0.4",
