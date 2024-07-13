@@ -1,5 +1,6 @@
 import _ from "lodash";
 
+import { ModelParent } from './modelDefault';
 import { ModelBase, ModelBaseStyle } from './modelBase';
 import { PlanarBP, AuxBP } from './modelBP';
 import { drawBases } from '../layouts/layout';
@@ -41,6 +42,7 @@ let parseDBN = function(dbn){
  * @property {Array} baseList - Array of ModelBase
  */
 export class RNA {
+	group = null;
 	name = null;
 	cy;
 	cfg;
@@ -94,7 +96,7 @@ export class RNA {
 			// Next base belongs to another strand:w
 			//
 			if (sepPosLst.indexOf(i) >= 0) {
-				base.setBackbone(DiscontinuousBackbone);
+				base.setBackbone(new DiscontinuousBackbone());
 			}
 			rna.baseList[i] = base;
 		}
@@ -124,7 +126,12 @@ export class RNA {
 	 * Get RNA name
 	 */
 	getName(name) {
-		// TODO: include multi rna name if exist
+		if (this.name === null) {
+			return null
+		}
+		if ((this.group !== null) && (this.group.getName() !== null)) {
+			return `${this.group.getName()}_${this.name}`;
+		}
 		return this.name;
 	}
 
@@ -141,43 +148,16 @@ export class RNA {
 	}
 
 	getSelector(inst) {
-		if (this.name === null) {
+		if (this.getName() === null) {
 			return inst;
 		}
 		let instNew = inst;
 		["node", "edge"].forEach((t) => {
 			if (inst.startsWith(t)) {
-				instNew = inst.replace(t, `${t}.${this.name}`);
+				instNew = inst.replace(t, `${t}.${this.getName()}`);
 			}
 		});
 		return instNew;
-	}
-
-	getCyId(id, type) {
-		let newId = (this.name === null) ? [] : [`${this.name}`];
-		switch (type) {
-			case "base":
-				// newId += "";
-				break;
-			case "backbone":
-				newId.push("backbone");
-				break;
-			case "planar":
-				newId.push("planarbp");
-				break;
-			case "aux":
-				newId.push("auxbp");
-				break;
-			case "parent":
-				newId.push("parent");
-				break;
-			default:
-				throw new Error(`Unknown type: ${type}`);
-		}
-		if (id !== null) {
-			newId.push(id);
-		}
-		return newId.join("_");
 	}
 
 	/*
@@ -207,7 +187,7 @@ export class RNA {
 	addBP(i, j, opt={}) {
 		let basei = this.getBase(i), basej = this.getBase(j);
 		// Create ModelBP object for basepair
-		let mbp = new AuxBP(basei, basej, opt);
+		let mbp = new AuxBP(basei, basej, opt, this);
 		mbp.group = this;
 		let indi, indj;
 		[indi, indj] = [Math.min(basei.ind, basej.ind), Math.max(basei.ind, basej.ind)]
@@ -241,13 +221,14 @@ export class RNA {
 		if (mbp === null) {
 			mbp = new AuxBP(basei, basej);
 		}
+		mbp.group = this;
 		this.auxBPs.push(mbp);
 	}
 
 
 	addBPNow(i, j, opt={}) {
 		let basei = this.getBase(i), basej = this.getBase(j);
-		let mbp = new PlanarBP(basei, basej, opt);
+		let mbp = new PlanarBP(basei, basej, opt, this);
 		basei.setBP(mbp);
 		basej.setBP(mbp);
 	}
@@ -305,9 +286,10 @@ export class RNA {
 		let parent = null;
 		// Create compound node if needed
 		if (this.cfg.drawParentNode) {
+			let parentBase = new ModelParent(this);
 			parent = {
 				data: {
-					id: getCyId(this.name, null, "parent"),
+					id: parentBase.getId(),
 				},
 				classes: ["parentNode"],
 			}
@@ -391,17 +373,17 @@ export class RNA {
 		let res = [];
 		for (let i = 0; i < this.baseList.length - 1; ++i) {
 			let backbone = this.baseList[i].getBackbone();
-			if (backbone != DiscontinuousBackbone) {
+			if (!(backbone instanceof DiscontinuousBackbone)) {
 				let el = {
 					"data": {
-						id: getCyId(this.name, i, 'backbone'),
-						source: getCyId(this.name, i, 'base'),
-						target: getCyId(this.name, i+1, 'base')
+						id: backbone.getId(),
+						source: this.baseList[i].getId(),
+						target: this.baseList[i+1].getId()
 					},
 					"classes": ["backbone"]
 				};
-				if (this.name !== null) {
-					el.classes.push(this.name);
+				if (this.getName() !== null) {
+					el.classes.push(this.getName());
 				}
 				res.push(el);
 			}
@@ -440,8 +422,8 @@ export class RNA {
 	 */
 	elOfSingleBP(bp) {
 		let edgeEl = bp.toCyEl();
-		if (this.name !== null) {
-			edgeEl.classes.push(this.name);
+		if (this.getName() !== null) {
+			edgeEl.classes.push(this.getName());
 		}
 		return edgeEl;
 	}
@@ -459,7 +441,7 @@ export class RNA {
 				let bp = base.getBP();
 				bp.ind = base.ind;
 				let edgeEl = this.elOfSingleBP(bp);
-				edgeEl.data.id = getCyId(this.name, base.ind, "planar");
+				// edgeEl.data.id = getCyId(this.getName(), base.ind, "planar");
 				edgeEl.classes.push("planarbp");
 				if (cfg.layout == Layouts.LINE) {
 					if (_.isUndefined(edgeEl.style)) {
@@ -484,7 +466,7 @@ export class RNA {
 			let bp = this.auxBPs[i];
 			bp.ind = i;
 			let edgeEl = this.elOfSingleBP(bp);
-			// edgeEl.data.id = getCyId(this.name, i, "aux");
+			// edgeEl.data.id = getCyId(this.getName(), i, "aux");
 			edgeEl.classes.push("auxbp");
 			if (cfg.layout == Layouts.LINE) {
 				if (_.isUndefined(edgeEl.style)) {

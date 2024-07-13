@@ -1,8 +1,8 @@
 import _ from "lodash";
 
+import { ModelDefault } from './modelDefault';
 import { ModelBP } from './modelBP';
-import { DefaultBackbone } from './modelBackbone';
-import { getCyId } from '../utils/cy';
+import { ModelBackbone, DefaultBackbone } from './modelBackbone';
 
 /**
  * ModelBase represents one base in RNA
@@ -15,41 +15,23 @@ import { getCyId } from '../utils/cy';
  * @property {ModelBase} partner - index of canonical bp partner, -1 means unpaired
  * @property {bool|null} nested - true if basepair is nested
  */
-export class ModelBase {
+export class ModelBase extends ModelDefault {
+	name = "base";
 	bp = null;
 	nested = null;
 	coords = {x: null, y: null};
 	center = {x: null, y: null};
 	style = null;
-	bacbone = DefaultBackbone;
+	backbone = null;
 	classes = [];
-	group = null;
 	constructor(ind, bn, label, rna=null) {
+		super();
 		this.ind = ind;
 		this.realInd = bn;
 		this.c = label;
 		this.group = rna;
 	}
 
-	/**
-	 * Define base id
-	 * @param {string} id - base id
-	 */
-	setId(id) {
-		this.id = id;
-	}
-
-	/**
-	 * Get base id
-	 * returns default id if base id is undefined
-	 */
-	getId() {
-		if (_.isUndefined(this.id)) {
-			let groupname = (this.group === null) ? null : this.group.getName();
-			return getCyId(groupname, this.ind, 'base');
-		}
-		return this.id;
-	}
 
 	/**
 	 * Set planar basepair
@@ -110,15 +92,20 @@ export class ModelBase {
 	}
 
 	setBackbone(backbone) {
+		if (!(backbone instanceof ModelBackbone)) {
+			throw new Error("Input needs to be an instance of ModelBackbone");
+		}
+		backbone.ind = this.ind;
+		backbone.group = this.group;
 		this.backbone = backbone;
 	}
 
-	getBackbone(backbone) {
+	getBackbone() {
+		// Create default backbone missing
+		if (this.backbone === null) {
+			this.setBackbone(new DefaultBackbone());
+		}
 		return this.backbone;
-	}
-
-	getBackboneiType(backbone) {
-		return this.backbone.getType();
 	}
 
 	addCustomClass(inst) {

@@ -1,11 +1,12 @@
 import { RNA } from "../models/RNA";
 import { getCyId } from "../utils/cy";
-import { ModelBP } from "../models/modelBP";
+import { AuxBP } from "../models/modelBP";
 
 /**
  * Genreal Multi RNA Draw class
  */
 export class MultiDraw {
+	name = null;
 	rnaList = [];
 	rnaLimit = null;
 	auxBPs = [];
@@ -13,11 +14,30 @@ export class MultiDraw {
 	}
 
 	/**
+	 * Set object name
+	 * @param {string} name - object name
+	 */
+	setName(name) {
+		this.name = name;
+	}
+
+	/**
+	 * Get object name
+	 */
+	getName(name) {
+		// TODO: include multi rna name if exist
+		if (this.name === null) {
+			return null
+		}
+		return this.name;
+	}
+
+	/**
 	 * Add RNA into draw
 	 * @param {RNA} rna - RNA to add
 	 */
 	addRNA(rna) {
-		if (! rna instanceof RNA) {
+		if (!(rna instanceof RNA)) {
 			throw new Error("Input is not an instance of RNA");
 		}
 		if ((this.rnaLimit !== null) && (this.rnaLimit <= this.rnaList.length)) {
@@ -28,6 +48,7 @@ export class MultiDraw {
 		if (rna.name === null) {
 			rna.name = `RNA${this.getRNACount()}`;
 		}
+		rna.group = this;
 		this.rnaList.push(rna);
 		return this.getRNACount() - 1;
 	}
@@ -61,7 +82,8 @@ export class MultiDraw {
 	 * @param {Object} opt - options to create ModelBP
 	 */
 	addInterBP(basei, basej, opt={}) {
-		let mbp = new ModelBP(basei, basej, opt);
+		let mbp = new AuxBP(basei, basej, opt);
+		mbp.group = this;
 		this.auxBPs.push(mbp);
 	}
 
@@ -71,7 +93,6 @@ export class MultiDraw {
 			let bp = this.auxBPs[i];
 			bp.ind = i;
 			let bpEl = bp.toCyEl();
-			bpEl.data.id = getCyId(null, i, "aux");
 			bpEl.classes.push("auxbp");
 			res.push(bpEl);
 		}

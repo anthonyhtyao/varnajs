@@ -1,6 +1,6 @@
 // import {BASEPAIR_COLOR_DEFAULT, BASEPAIR_THICKNESS_DEFAULT} from "./config";
 import _ from "lodash";
-import { getCyId } from '../utils/cy';
+import { ModelDefault } from "./modelDefault";
 
 // Here we list all possible label in lower case for each edge
 const WatsonCrick_List = ['w', 'wc', 'watson'];
@@ -60,7 +60,7 @@ function parseStericity(label) {
 /**
  * ModelBP represents a basepair
  */
-export class ModelBP {
+export class ModelBP extends ModelDefault {
 	name = "basepair";
   partner5;
 	partner3;
@@ -74,9 +74,9 @@ export class ModelBP {
 	// color = BASEPAIR_COLOR_DEFAULT;
 	thickness = null;
 	color = null;
-	group = null;
-	ind = null;
+	// ind = null;
 	constructor (part5, part3, opt={}, rna=null) {
+		super();
 		this.partner5 = part5;
 		this.partner3 = part3;
 		this.group = rna;
@@ -99,30 +99,6 @@ export class ModelBP {
 			this.color = String(opt.color);
 		}
 	}
-
-	/**
-	 * Define basepair id
-	 * @param {string} id - basepair id
-	 */
-	setId(id) {
-		this.id = id;
-	}
-
-	/**
-	 * Get basepair id
-	 * returns default id if basepair id is undefined
-	 */
-	getId() {
-		if (_.isUndefined(this.id)) {
-			if (this.ind === null) {
-				throw new Error("Basepair ind is unset");
-			}
-			let groupname = (this.group === null) ? null : this.group.getName();
-			return getCyId(groupname, this.ind, 'bp');
-		}
-		return this.id;
-	}
-
 
 	/**
 	 * Set color and thickness of basepair

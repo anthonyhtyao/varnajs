@@ -1,33 +1,29 @@
 // Cytoscape related function
+import _ from "lodash";
 
-
-
-export function	getCyId(rnaname, id, type, sep="_") {
-	let newId = (rnaname === null) ? [] : [rnaname];
-	switch (type) {
-		case "base":
-			// newId += "";
-			break;
-		case "backbone":
-			newId.push("backbone");
-			break;
-		case "bp":
-			newId.push("basepair");
-			break;
-		case "planar":
-			newId.push("planarbp");
-			break;
-		case "aux":
-			newId.push("auxbp");
-			break;
-		case "parent":
-			newId.push("parent");
-			break;
-		default:
-			throw new Error(`Unknown type: ${type}`);
+/**
+ * Return cytoscape id for given object, base, basepair, backbone etc
+ */
+export function	getCyId(obj) {
+	// user defined id
+	if (! _.isUndefined(obj.id)) {
+		return obj.id;
 	}
-	if (id !== null) {
-		newId.push(id);
+
+	if (_.isUndefined(obj.ind)) {
+		throw new Error("Object index in undefined");
 	}
-	return newId.join(sep);
+	
+	let res = [];
+	// Object (multi) RNA group
+	if (obj.group.getName() !== null) {
+		res.push(obj.group.getName());
+	}
+	// Object type
+	res.push(obj.name);
+	// Object index	
+	if (obj.ind !== null) {
+		res.push(obj.ind);
+	}
+	return res.join("_");
 }
