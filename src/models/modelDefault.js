@@ -22,13 +22,32 @@ export class ModelDefault {
 	getId() {
 		return getCyId(this);
 	}
+
+
+	/**
+	 * Returns object in cytoscape element format
+	 * @abstract
+	 */
+	toCyEl() {
+		throw new Error("Method 'toCyEl' must be implemented.");
+	}
 }
 
-export class ModelParent extends ModelDefault {
-	name = "parent";
+export class ModelGroupNode extends ModelDefault {
+	name = "group";
 	ind = null;
 	constructor(rna) {
 		super();
 		this.group = rna;
+	}
+
+	toCyEl() {
+		let el = {
+			data: {
+				id: this.getId(),
+			},
+			classes: ["groupNode"],
+		}
+		return el;
 	}
 }

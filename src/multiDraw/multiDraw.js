@@ -25,7 +25,6 @@ export class MultiDraw {
 	 * Get object name
 	 */
 	getName(name) {
-		// TODO: include multi rna name if exist
 		if (this.name === null) {
 			return null
 		}
@@ -103,6 +102,7 @@ export class MultiDraw {
 	/**
 	 * @abstract
 	 */
+	// TODO: implement general cy
 	createCy(container) {
 		throw new Error("Method 'createCy(container)' must be implemented.");
 	}

@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { ModelParent } from './modelDefault';
+import { ModelGroupNode } from './modelDefault';
 import { ModelBase, ModelBaseStyle } from './modelBase';
 import { PlanarBP, AuxBP } from './modelBP';
 import { drawBases } from '../layouts/layout';
@@ -44,6 +44,7 @@ let parseDBN = function(dbn){
 export class RNA {
 	group = null;
 	name = null;
+	groupNode = new ModelGroupNode(this);
 	cy;
 	cfg;
 	baseList = [];
@@ -283,24 +284,16 @@ export class RNA {
 	 */
 	elOfBases() {
 		let res = [];
-		let parent = null;
-		// Create compound node if needed
-		if (this.cfg.drawParentNode) {
-			let parentBase = new ModelParent(this);
-			parent = {
-				data: {
-					id: parentBase.getId(),
-				},
-				classes: ["parentNode"],
-			}
-			res.push(parent);
+		// Draw compound node if parent group exist
+		if (this.group !== null) {
+			res.push(this.groupNode.toCyEl());
 		}
 		
 		for (let i = 0; i < this.baseList.length; ++i) {
 			let base = this.baseList[i];
 			let baseEl = base.toCyEl(isNumberDrawn(base, this.cfg.baseNumPeriod, this.baseList.length));
-			if (parent !== null) {
-				baseEl.data.parent = parent.data.id;
+			if (this.group !== null) {
+				baseEl.data.parent = this.groupNode.getId();
 			}
 			res.push(baseEl);
 		}
