@@ -10,9 +10,9 @@ import { toFactor } from '../utils/factor';
  * Multi structures configuration extended from default config
  */
 export class MultiConfig extends VARNAConfig {
-	autoParentPos=true;
-	parentNodePadding=10;
-	parentNodeMargin=10;
+	autoGroupPos=true;
+	groupNodePadding=10;
+	groupNodeMargin=10;
 
 	constructor (opt={}) {
 		super();
@@ -29,8 +29,8 @@ export class MultiStructures extends MultiDraw {
 	 * Compute each RNA position using simple rectangle packing algorithm with pack (npm)
 	 */
 	packRNAs() {
-		let padding = this.cfg.parentNodePadding;
-		let margin = this.cfg.parentNodeMargin;
+		let padding = this.cfg.groupNodePadding;
+		let margin = this.cfg.groupNodeMargin;
 		let dist = 2 * (padding + margin);
 		let rnaSizes = this.rnaList.map((rna) => {
 			let box = rna.getBoundingBox().getSize();
@@ -66,28 +66,27 @@ export class MultiStructures extends MultiDraw {
 			'layout': {'name': 'preset'},
 		};
 		this.rnaList.forEach((rna) => {
-			rna.cfg.drawParentNode = true;
 			let dist = rna.createCyFormat();
 			cyDist.elements.push(...dist.elements);
 			cyDist.style.push(...dist.style);
 		});	
-		// Parent Node style
+		// Group Node style
 		cyDist.style.push({
-		  "selector": `.parentNode`,
+		  "selector": `.groupNode`,
 		  "style": {
-		  	"padding": this.cfg.parentNodePadding,
+		  	"padding": this.cfg.groupNodePadding,
 				"background-opacity": 0,
 				"border-opacity": 0,
 		  },
 		});
-		if (this.cfg.autoParentPos) {
+		if (this.cfg.autoGroupPos) {
 			this.packRNAs();
 		}
 		cyDist.elements.push(...this.elOfInterBPs());
 		var cy = cytoscape(cyDist);
 		this.cy = cy;
-		let parents = this.cy.nodes('.parentNode');
-		for (let i = 0; i < parents.length; i++) {
+		let groups = this.cy.nodes('.groupNode');
+		for (let i = 0; i < groups.length; i++) {
 			let end = this.getPosOfRNA(i);
 			// no shift
 			if (_.isUndefined(end)) {
@@ -96,10 +95,10 @@ export class MultiStructures extends MultiDraw {
 			let bbox = this.rnaList[i].getBoundingBox();
 			// we need this pos to be moved to rectangle packer result
 			let start = {
-				x: bbox.xMin - this.cfg.parentNodePadding,
-				y: bbox.yMax + this.cfg.parentNodePadding,
+				x: bbox.xMin - this.cfg.groupNodePadding,
+				y: bbox.yMax + this.cfg.groupNodePadding,
 			};
-			parents[i].shift(toFactor(start, end));
+			groups[i].shift(toFactor(start, end));
 		}
 		this.cy.fit();
 	}

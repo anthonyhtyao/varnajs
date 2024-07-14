@@ -1,7 +1,8 @@
 import _ from "lodash";
 
+import { ModelGroupNode } from './modelDefault';
 import { ModelBase, ModelBaseStyle } from './modelBase';
-import { ModelBP } from './modelBP';
+import { PlanarBP, AuxBP } from './modelBP';
 import { drawBases } from '../layouts/layout';
 import { Layouts, VARNAConfig } from './config';
 import { ptableFromDBN, parseSeq } from '../utils/RNA';
@@ -41,7 +42,9 @@ let parseDBN = function(dbn){
  * @property {Array} baseList - Array of ModelBase
  */
 export class RNA {
+	group = null;
 	name = null;
+	groupNode = new ModelGroupNode(this);
 	cy;
 	cfg;
 	baseList = [];
@@ -94,7 +97,7 @@ export class RNA {
 			// Next base belongs to another strand:w
 			//
 			if (sepPosLst.indexOf(i) >= 0) {
-				base.setBackbone(DiscontinuousBackbone);
+				base.setBackbone(new DiscontinuousBackbone());
 			}
 			rna.baseList[i] = base;
 		}
@@ -112,6 +115,27 @@ export class RNA {
 		return rna;
 	}
 
+	/**
+	 * Set RNA name
+	 * @param {string} name - object name
+	 */
+	setName(name) {
+		this.name = name;
+	}
+
+	/**
+	 * Get RNA name
+	 */
+	getName(name) {
+		if (this.name === null) {
+			return null
+		}
+		if ((this.group !== null) && (this.group.getName() !== null)) {
+			return `${this.group.getName()}_${this.name}`;
+		}
+		return this.name;
+	}
+
 
 	/**
 	 * Set drawing configuration
@@ -125,43 +149,16 @@ export class RNA {
 	}
 
 	getSelector(inst) {
-		if (this.name === null) {
+		if (this.getName() === null) {
 			return inst;
 		}
 		let instNew = inst;
 		["node", "edge"].forEach((t) => {
 			if (inst.startsWith(t)) {
-				instNew = inst.replace(t, `${t}.${this.name}`);
+				instNew = inst.replace(t, `${t}.${this.getName()}`);
 			}
 		});
 		return instNew;
-	}
-
-	getCyId(id, type) {
-		let newId = (this.name === null) ? [] : [`${this.name}`];
-		switch (type) {
-			case "base":
-				// newId += "";
-				break;
-			case "backbone":
-				newId.push("backbone");
-				break;
-			case "planar":
-				newId.push("planarbp");
-				break;
-			case "aux":
-				newId.push("auxbp");
-				break;
-			case "parent":
-				newId.push("parent");
-				break;
-			default:
-				throw new Error(`Unknown type: ${type}`);
-		}
-		if (id !== null) {
-			newId.push(id);
-		}
-		return newId.join("_");
 	}
 
 	/*
@@ -191,7 +188,8 @@ export class RNA {
 	addBP(i, j, opt={}) {
 		let basei = this.getBase(i), basej = this.getBase(j);
 		// Create ModelBP object for basepair
-		let mbp = new ModelBP(basei, basej, opt);
+		let mbp = new AuxBP(basei, basej, opt, this);
+		mbp.group = this;
 		let indi, indj;
 		[indi, indj] = [Math.min(basei.ind, basej.ind), Math.max(basei.ind, basej.ind)]
 		// Add directly to aux
@@ -211,7 +209,7 @@ export class RNA {
 					}
 				}
 			}
-			this.addBPNow(basei, basej, mbp);
+			this.addBPNow(basei, basej, opt);
 		}
 	}
 
@@ -222,17 +220,16 @@ export class RNA {
 	addBPAux(i, j, mbp=null) {
 		let basei = this.getBase(i), basej = this.getBase(j);
 		if (mbp === null) {
-			mbp = new ModelBP(basei, basej);
+			mbp = new AuxBP(basei, basej);
 		}
+		mbp.group = this;
 		this.auxBPs.push(mbp);
 	}
 
 
-	addBPNow(i, j, mbp=null) {
+	addBPNow(i, j, opt={}) {
 		let basei = this.getBase(i), basej = this.getBase(j);
-		if (mbp === null) {
-			mbp = new ModelBP(basei, basej);
-		}
+		let mbp = new PlanarBP(basei, basej, opt, this);
 		basei.setBP(mbp);
 		basej.setBP(mbp);
 	}
@@ -287,23 +284,16 @@ export class RNA {
 	 */
 	elOfBases() {
 		let res = [];
-		let parent = null;
-		// Create compound node if needed
-		if (this.cfg.drawParentNode) {
-			parent = {
-				data: {
-					id: getCyId(this.name, null, "parent"),
-				},
-				classes: ["parentNode"],
-			}
-			res.push(parent);
+		// Draw compound node if parent group exist
+		if (this.group !== null) {
+			res.push(this.groupNode.toCyEl());
 		}
 		
 		for (let i = 0; i < this.baseList.length; ++i) {
 			let base = this.baseList[i];
 			let baseEl = base.toCyEl(isNumberDrawn(base, this.cfg.baseNumPeriod, this.baseList.length));
-			if (parent !== null) {
-				baseEl.data.parent = parent.data.id;
+			if (this.group !== null) {
+				baseEl.data.parent = this.groupNode.getId();
 			}
 			res.push(baseEl);
 		}
@@ -376,17 +366,17 @@ export class RNA {
 		let res = [];
 		for (let i = 0; i < this.baseList.length - 1; ++i) {
 			let backbone = this.baseList[i].getBackbone();
-			if (backbone != DiscontinuousBackbone) {
+			if (!(backbone instanceof DiscontinuousBackbone)) {
 				let el = {
 					"data": {
-						id: getCyId(this.name, i, 'backbone'),
-						source: getCyId(this.name, i, 'base'),
-						target: getCyId(this.name, i+1, 'base')
+						id: backbone.getId(),
+						source: this.baseList[i].getId(),
+						target: this.baseList[i+1].getId()
 					},
 					"classes": ["backbone"]
 				};
-				if (this.name !== null) {
-					el.classes.push(this.name);
+				if (this.getName() !== null) {
+					el.classes.push(this.getName());
 				}
 				res.push(el);
 			}
@@ -425,8 +415,8 @@ export class RNA {
 	 */
 	elOfSingleBP(bp) {
 		let edgeEl = bp.toCyEl();
-		if (this.name !== null) {
-			edgeEl.classes.push(this.name);
+		if (this.getName() !== null) {
+			edgeEl.classes.push(this.getName());
 		}
 		return edgeEl;
 	}
@@ -442,8 +432,9 @@ export class RNA {
 			let j = base.getPartnerInd();
 			if (j > base.ind) {
 				let bp = base.getBP();
+				bp.ind = base.ind;
 				let edgeEl = this.elOfSingleBP(bp);
-				edgeEl.data.id = getCyId(this.name, base.ind, "planar");
+				// edgeEl.data.id = getCyId(this.getName(), base.ind, "planar");
 				edgeEl.classes.push("planarbp");
 				if (cfg.layout == Layouts.LINE) {
 					if (_.isUndefined(edgeEl.style)) {
@@ -466,8 +457,9 @@ export class RNA {
 		let res = [];
 		for (let i = 0; i < this.auxBPs.length; i++) {
 			let bp = this.auxBPs[i];
+			bp.ind = i;
 			let edgeEl = this.elOfSingleBP(bp);
-			edgeEl.data.id = getCyId(this.name, i, "aux");
+			// edgeEl.data.id = getCyId(this.getName(), i, "aux");
 			edgeEl.classes.push("auxbp");
 			if (cfg.layout == Layouts.LINE) {
 				if (_.isUndefined(edgeEl.style)) {

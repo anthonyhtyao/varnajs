@@ -1,8 +1,8 @@
 import _ from "lodash";
 
+import { ModelDefault } from './modelDefault';
 import { ModelBP } from './modelBP';
-import { DefaultBackbone } from './modelBackbone';
-import { getCyId } from '../utils/cy';
+import { ModelBackbone, DefaultBackbone } from './modelBackbone';
 
 /**
  * ModelBase represents one base in RNA
@@ -15,27 +15,23 @@ import { getCyId } from '../utils/cy';
  * @property {ModelBase} partner - index of canonical bp partner, -1 means unpaired
  * @property {bool|null} nested - true if basepair is nested
  */
-export class ModelBase {
+export class ModelBase extends ModelDefault {
+	name = "base";
 	bp = null;
 	nested = null;
 	coords = {x: null, y: null};
 	center = {x: null, y: null};
 	style = null;
-	bacbone = DefaultBackbone;
+	backbone = null;
 	classes = [];
 	constructor(ind, bn, label, rna=null) {
+		super();
 		this.ind = ind;
 		this.realInd = bn;
 		this.c = label;
-		this.rna = rna;
+		this.group = rna;
 	}
 
-	/**
-	 * Get Id of base
-	 */
-	getId() {
-		return getCyId(this.rna.name, this.ind, 'base');
-	}
 
 	/**
 	 * Set planar basepair
@@ -96,15 +92,20 @@ export class ModelBase {
 	}
 
 	setBackbone(backbone) {
+		if (!(backbone instanceof ModelBackbone)) {
+			throw new Error("Input needs to be an instance of ModelBackbone");
+		}
+		backbone.ind = this.ind;
+		backbone.group = this.group;
 		this.backbone = backbone;
 	}
 
-	getBackbone(backbone) {
+	getBackbone() {
+		// Create default backbone missing
+		if (this.backbone === null) {
+			this.setBackbone(new DefaultBackbone());
+		}
 		return this.backbone;
-	}
-
-	getBackboneiType(backbone) {
-		return this.backbone.getType();
 	}
 
 	addCustomClass(inst) {
@@ -121,8 +122,8 @@ export class ModelBase {
 		};
 		// Set base classes
 		el['classes'] = [...this.classes];
-		if (this.rna.name !== null) {
-			el['classes'].push(this.rna.name);
+		if (this.group.getName() !== null) {
+			el['classes'].push(this.group.getName());
 		}
 		// Add baseNum class for node to draw base number
 		if (withNum) {

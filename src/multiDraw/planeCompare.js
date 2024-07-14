@@ -43,6 +43,14 @@ export class PlaneCompare extends MultiDraw {
 		});
 		cyBase.elements.push(...rna2BP.el);
 		cyBase.style.push(...rna2BP.style);
+		// Group Node style
+		cyBase.style.push({
+		  "selector": `.groupNode`,
+		  "style": {
+				"background-opacity": 0,
+				"border-opacity": 0,
+		  },
+		});
 
 		var cy = cytoscape(cyBase);
 		this.cy = cy;
