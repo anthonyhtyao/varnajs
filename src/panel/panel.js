@@ -6,18 +6,17 @@ import { getCyId } from "../utils/cy";
 import { AuxBP } from "../models/modelBP";
 import { VARNAConfig } from "../models/config";
 import { toFactor } from '../utils/factor';
+import { BaseClass, mix } from '../utils/mixin';
 
 /**
- * Genreal Draw Panel class
+ * Panel superclass for multiple inheritance
  */
-export class Panel {
+const PanelSuper = (superclass) => class extends superclass {
 	name = null;
 	rnaList = [];
 	rnaLimit = null;
 	cfg = new VARNAConfig();
 	auxBPs = [];
-	constructor () {
-	}
 
 	/**
 	 * Set object name
@@ -181,3 +180,16 @@ export class Panel {
 		}
 	}
 }
+
+/**
+ * General Draw Panel class
+ */
+export class Panel extends mix(BaseClass).with(PanelSuper) {}
+
+//////////////
+//          //
+//  Single  //
+//          //
+//////////////
+//
+// Here we create a special panel that only takes one RNA by multi inheritance (mixin)

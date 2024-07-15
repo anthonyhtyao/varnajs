@@ -9,6 +9,7 @@ import { ptableFromDBN, parseSeq } from '../utils/RNA';
 import { DiscontinuousBackbone } from './modelBackbone';
 import { BoundingBox } from '../utils/model';
 import { getCyId } from '../utils/cy';
+import { BaseClass, mix } from '../utils/mixin';
 
 const DBNStrandSep = "&";
 const BaseRadius = 10;
@@ -34,14 +35,9 @@ let parseDBN = function(dbn){
 };
 
 /**
- * Basic class to draw one RNA
- * @class
- * @constructor
- * @public
- * @property {cytoscape} cy - cytoscape drawing
- * @property {Array} baseList - Array of ModelBase
+ * RNA superclass for multi inheritance
  */
-export class RNA {
+export const RNASuper = (superclass) => class extends superclass {
 	group = null;
 	name = null;
 	groupNode = new ModelGroupNode(this);
@@ -50,8 +46,6 @@ export class RNA {
 	baseList = [];
 	auxBPs = [];
 	baseStyleList = [];
-	constructor() {
-	}
 
 	// TODO: Refactor as VARNA
 	/**
@@ -523,6 +517,16 @@ export class RNA {
 		return bbox;
 	}
 }
+
+/**
+ * Basic class to draw one RNA
+ * @class
+ * @constructor
+ * @public
+ * @property {cytoscape} cy - cytoscape drawing
+ * @property {Array} baseList - Array of ModelBase
+ */
+export class RNA extends mix(BaseClass).with(RNASuper) {}
 
 /**
  * Return true to show number of given base
