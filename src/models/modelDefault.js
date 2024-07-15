@@ -33,7 +33,7 @@ export class ModelDefault {
 	}
 }
 
-export class ModelGroupNode extends ModelDefault {
+export class ModelGroupRNA extends ModelDefault {
 	name = "group";
 	ind = null;
 	constructor(rna) {
@@ -46,7 +46,7 @@ export class ModelGroupNode extends ModelDefault {
 			data: {
 				id: this.getId(),
 			},
-			classes: ["groupNode"],
+			classes: ["groupRNA"],
 		}
 		return el;
 	}

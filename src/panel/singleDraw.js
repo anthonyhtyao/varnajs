@@ -1,16 +1,23 @@
 import cytoscape from 'cytoscape';
 import htmlLabel from 'cytoscape-html-label';
 htmlLabel( cytoscape );
+import { BaseClass, mix } from '../utils/mixin';
+import { RNASuper } from "../models/RNA";
+import { PanelSuper } from "./panel";
+// Here we create a special panel that only takes one RNA by multi inheritance (mixin)
 
-import { RNA } from "../models/RNA";
-import { ModelBP } from "../models/modelBP";
+export class SingleDraw extends mix(BaseClass).with(PanelSuper, RNASuper) {
+	rnaList = [this];
+	rnaLimit = 1;
+}
+
 
 
 /**
  * Draw a structure
- * @extends RNA
+ * @extends SingleDraw
  */
-export class Structure extends RNA {
+export class Structure extends SingleDraw {
 
 	/**
 	 * Create Drawing from ebi basepair interaction json
@@ -35,19 +42,14 @@ export class Structure extends RNA {
 	 *	Create cytoscape drawing
 	 *	@param {DOM element} container - where to draw cytoscape
 	 */
-	createCy(container) {
-		let cfg = this.cfg;
-		let cyDist = this.createCyFormat();
-  	cyDist["container"] = container;
-
-		var cy = cytoscape(cyDist);
-		this.cy = cy;
-
+	draw(container) {
+		super.draw(container);
 		// HTML label
+		// TODO: drop htmllabel by using cytoscape node for basenum
 		let baseNumLabel = this.cyOfBaseNum();
 		let htmlLabel = [...baseNumLabel];
 		if (htmlLabel.length != 0) {
-			cy.htmlLabel([...baseNumLabel]);
+			this.cy.htmlLabel([...baseNumLabel]);
 		}
 	}
 }

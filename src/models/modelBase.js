@@ -78,7 +78,7 @@ export class ModelBase extends ModelDefault {
 		this.coords.y = coords.y;
 	}
 
-	getCoords(coords) {
+	getCoords() {
 		return {x: this.coords.x, y: this.coords.y};
 	}
 

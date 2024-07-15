@@ -1,9 +1,8 @@
 export * from "./models/index";
-export * from "./singleDraw/index";
-export * from "./multiDraw/index";
+export * from "./panel/index";
 import pack from "pack";
 import { VARNAConfig } from "./models/config";
-import { Structure } from "./singleDraw/structure";
+import { Structure } from "./panel/singleDraw";
 
 /**
  * Basic RNA draw function

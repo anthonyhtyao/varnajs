@@ -40,7 +40,7 @@ export const BASEPAIR_THICKNESS_DEFAULT = 1;
  * VARNAConfig defines the style of drawing
  * @class
  * @public
- * @property {string} layout - base layout (default: Layouts.RADIATE)
+ * @property {string} layout - base layout within one RNA (default: Layouts.RADIATE)
  * @property {int} spaceBetweenBases - multiplier for base spacing
  * @property {int} bpDistance - distance between paired bases (length of canonical basepair)
  * @property {int} backboneLoop - backbone distance within a loop (radiate, turtle, puzzler)
@@ -61,6 +61,9 @@ export const BASEPAIR_THICKNESS_DEFAULT = 1;
  * @property {bool} bpLowerPlane - draw basepair in lower plane in linear layout (default: false)
  * @property {bool} drawBases - base visibility (default: true)
  * @property {bool} drawBacbone - backbone visibility (default: true)
+ * @property {bool} autoGroupPos - flag to automatically determine each RNA group position (default: true)
+ * @property {float} groupRNAPadding - padding of group node to other nodes in the same RNA (default: 10)
+ * @property {float} groupRNAMargin - Margin of group node to other group nodes (default: 10)
  * @property {Puzzler} puzzler - puzzler setting
  */
 export class VARNAConfig {
@@ -96,8 +99,10 @@ export class VARNAConfig {
 	drawBases = true;
 	drawBackbone = true;
 
-	// Cytoscape specific configuration
-	drawGroupNode = false;
+	// Multiple RNAs related settings
+	autoGroupPos=true;
+	groupRNAPadding=10;
+	groupRNAMargin=10;
 
 	// RNApuzzler config
 	puzzler = new Puzzler();
@@ -164,7 +169,7 @@ export class VARNAConfig {
 	}
 
 	/**
-	 * Create general cytoscape style forbasepair 
+	 * Create general cytoscape style for basepair 
 	 * @param {string} selector - basepair selector (default: "edge.basepair")
 	 */
 	bpCyStyle(selector="edge.basepair") {
@@ -177,11 +182,27 @@ export class VARNAConfig {
 			"data": {layout: this.layout},
 		}
 		if (this.layout == Layouts.LINE) {
+			let dir = (this.bpLowerPlane) ? "" : "-";
 			style.style["curve-style"] = "unbundled-bezier";
 			style.style["control-point-weight"] = 0.5;
-			style.style["source-endpoint"] = "0 -10";
-			style.style["target-endpoint"] = "0 -10";
+			style.style["source-endpoint"] = `0 ${dir}10`;
+			style.style["target-endpoint"] = `0 ${dir}10`;
 		}
+		return style;
+	}
+
+	/**
+	 * Create general cytoscape style for group node
+	 */
+	groupRNACyStyle() {
+		let style = {
+		  "selector": `.groupRNA`,
+		  "style": {
+		  	"padding": this.groupRNAPadding,
+				"background-opacity": 0,
+				"border-opacity": 0,
+		  },
+		};
 		return style;
 	}
 
@@ -190,7 +211,7 @@ export class VARNAConfig {
 	 * This function calls each style function with default argument
 	 */
 	generalCyStyle() {
-		return [this.baseCyStyle(), this.backboneCyStyle(), this.bpCyStyle()];
+		return [this.baseCyStyle(), this.backboneCyStyle(), this.bpCyStyle(), this.groupRNACyStyle()];
 	}
 }
 
