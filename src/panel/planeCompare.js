@@ -22,7 +22,7 @@ export class PlaneCompare extends Panel {
 		throw new Error("PlaneCompare object does not support addBP. Use RNA.addBP instead.");
 	}
 
-	cyOfRNAs() {
+	createCyFormat() {
 		let rna1 = this.getRNA(0);
 		let rna2 = this.getRNA(1);
 		let res = {'elements': [], 'style': []};

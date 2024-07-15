@@ -15,11 +15,7 @@ import { Structure } from "./panel/singleDraw";
 export function drawRNA(container, dbn, seq="", varnaCfg=(new VARNAConfig())) {
 	let v = Structure.fromDBN(dbn, seq);
 	v.setConfig(varnaCfg);
-	v.createCy(container);
+	v.draw(container);
 	return v;
 }
 
-
-export function packTest(lst) {
-	return pack(lst);
-}

@@ -33,9 +33,9 @@
         let ss = document.getElementById('ss').value, seq = document.getElementById('seq').value;
         let layout = document.getElementById('layout').value;
         let v = varnajs.Structure.fromDBN(ss, seq);
-        let config = new varnajs.VARNAConfig({layout: layout});
+        let config = new varnajs.VARNAConfig({layout: layout, flatExteriorLoop:true});
 	      v.setConfig(config);
-	      v.createCy(document.getElementById("cy"));
+	      v.draw(document.getElementById("cy"));
 			}
 		</script>
 	</body>
