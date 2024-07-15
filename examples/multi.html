@@ -16,7 +16,6 @@
 
 		ss1: <input type="text" id="ss1">
 		ss2: <input type="text" id="ss2">
-		seq: <input type="text" id="seq">
     <button onclick="draw()">Click me</button>
 
     <div id="cy"></div>
@@ -24,13 +23,16 @@
 			function draw() {
         let ss1 = document.getElementById('ss1').value;
         let ss2 = document.getElementById('ss2').value;
-        let seq = document.getElementById('seq').value;
-        let v1 = varnajs.RNA.fromDBN(ss1, seq);
-        let v2 = varnajs.RNA.fromDBN(ss2, seq);
+        let v1 = varnajs.RNA.fromDBN(ss1, "");
+        let v2 = varnajs.RNA.fromDBN(ss2, "");
 				let config2 = new varnajs.VARNAConfig({bpColor: "red"});
 	      v1.cfg = new varnajs.VARNAConfig();
 	      v2.cfg = config2;
-				let together = new varnajs.PlaneCompare(v1, v2);
+				let together = new varnajs.Panel();
+				together.addRNA(v1);
+				together.addRNA(v2);
+				together.addBPAux(v1.getBase(0), v2.getBase(4));
+
 	      together.draw(document.getElementById("cy"));
 			}
 		</script>

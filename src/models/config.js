@@ -40,11 +40,14 @@ export const BASEPAIR_THICKNESS_DEFAULT = 1;
  * VARNAConfig defines the style of drawing
  * @class
  * @public
- * @property {string} layout - base layout (default: Layouts.RADIATE)
+ * @property {string} layout - base layout within one RNA (default: Layouts.RADIATE)
  * @property {int} spaceBetweenBases - multiplier for base spacing
  * @property {int} bpDistance - distance between paired bases (length of canonical basepair)
  * @property {int} backboneLoop - backbone distance within a loop (radiate, turtle, puzzler)
  * @property {int} backboneMultiLoop - backbone distance within a multiloop for radiate layout
+ * @property {bool} flatExteriorLoop - draw flat exterior loop in radiate mode (default: true)
+ * @property {bool} straightBulges - draw straight bulge in radiate mode (default: false)
+ * @property {float} bpIncrement - vertical increment in line mode (default: 0.65)
  * @property {string} baseNameColor - color of base name, i.e. nucleotide (default: rgb(64, 64, 64))
  * @property {string} baseInnerColor - color to fill base (default: rgb(242, 242, 242))
  * @property {string} baseOutlineColor - color of base border (default: rgb(91, 91, 91))
@@ -58,6 +61,9 @@ export const BASEPAIR_THICKNESS_DEFAULT = 1;
  * @property {bool} bpLowerPlane - draw basepair in lower plane in linear layout (default: false)
  * @property {bool} drawBases - base visibility (default: true)
  * @property {bool} drawBacbone - backbone visibility (default: true)
+ * @property {bool} autoGroupPos - flag to automatically determine each RNA group position (default: true)
+ * @property {float} groupRNAPadding - padding of group node to other nodes in the same RNA (default: 10)
+ * @property {float} groupRNAMargin - Margin of group node to other group nodes (default: 10)
  * @property {Puzzler} puzzler - puzzler setting
  */
 export class VARNAConfig {
@@ -67,6 +73,9 @@ export class VARNAConfig {
 	bpDistance = 65;
 	backboneLoop = 40;
 	backboneMultiLoop = 35;
+	flatExteriorLoop = true;
+	straightBulges = false;
+	bpIncrement = 0.65;
 	
 	// Base label
 	baseNameColor = BASE_NAME_COLOR_DEFAULT;
@@ -89,6 +98,12 @@ export class VARNAConfig {
 	// Visibility 
 	drawBases = true;
 	drawBackbone = true;
+
+	// Multiple RNAs related settings
+	autoGroupPos=true;
+	groupRNAPadding=10;
+	groupRNAMargin=10;
+
 	// RNApuzzler config
 	puzzler = new Puzzler();
 	
@@ -141,7 +156,7 @@ export class VARNAConfig {
 	 * Create general cytoscape style for backbone
 	 * @param {string} selector - backbone selector (default: "edge.backbone")
 	 */
-	backboneCyStyle(selector="edge.bacbone") {
+	backboneCyStyle(selector="edge.backbone") {
 		let style = {
     	"selector": `${selector}`,
 			"style": {
@@ -154,18 +169,49 @@ export class VARNAConfig {
 	}
 
 	/**
-	 * Create general cytoscape style forbasepair 
+	 * Create general cytoscape style for basepair 
 	 * @param {string} selector - basepair selector (default: "edge.basepair")
 	 */
-	bpCyStyle(selector="edge.bacbone") {
+	bpCyStyle(selector="edge.basepair") {
 		let style = {
     	"selector": `${selector}`,
 			"style": {
 				"line-color": this.bpColor,
 				"width": this.bpThickness,
-			}
+			},
+			"data": {layout: this.layout},
+		}
+		if (this.layout == Layouts.LINE) {
+			let dir = (this.bpLowerPlane) ? "" : "-";
+			style.style["curve-style"] = "unbundled-bezier";
+			style.style["control-point-weight"] = 0.5;
+			style.style["source-endpoint"] = `0 ${dir}10`;
+			style.style["target-endpoint"] = `0 ${dir}10`;
 		}
 		return style;
+	}
+
+	/**
+	 * Create general cytoscape style for group node
+	 */
+	groupRNACyStyle() {
+		let style = {
+		  "selector": `.groupRNA`,
+		  "style": {
+		  	"padding": this.groupRNAPadding,
+				"background-opacity": 0,
+				"border-opacity": 0,
+		  },
+		};
+		return style;
+	}
+
+	/**
+	 * Simple function to create general style
+	 * This function calls each style function with default argument
+	 */
+	generalCyStyle() {
+		return [this.baseCyStyle(), this.backboneCyStyle(), this.bpCyStyle(), this.groupRNACyStyle()];
 	}
 }
 

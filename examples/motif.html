@@ -36,8 +36,7 @@
         let v = varnajs.Motif.fromDBN(ss, seq);
         let config = new varnajs.MotifConfig({baseNumPeriod: 2});
 	      v.cfg = config;
-        console.log("Motif:", v);
-	      v.createCy(document.getElementById("cy"));
+	      v.draw(document.getElementById("cy"));
 			}
 		</script>
 	</body>

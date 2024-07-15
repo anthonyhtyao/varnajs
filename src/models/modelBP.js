@@ -1,5 +1,6 @@
 // import {BASEPAIR_COLOR_DEFAULT, BASEPAIR_THICKNESS_DEFAULT} from "./config";
 import _ from "lodash";
+import { ModelDefault } from "./modelDefault";
 
 // Here we list all possible label in lower case for each edge
 const WatsonCrick_List = ['w', 'wc', 'watson'];
@@ -59,7 +60,8 @@ function parseStericity(label) {
 /**
  * ModelBP represents a basepair
  */
-export class ModelBP {
+export class ModelBP extends ModelDefault {
+	name = "basepair";
   partner5;
 	partner3;
 	edge5 = EDGE.WC;
@@ -72,9 +74,12 @@ export class ModelBP {
 	// color = BASEPAIR_COLOR_DEFAULT;
 	thickness = null;
 	color = null;
-	constructor (part5, part3, opt={}) {
+	// ind = null;
+	constructor (part5, part3, opt={}, rna=null) {
+		super();
 		this.partner5 = part5;
 		this.partner3 = part3;
+		this.group = rna;
 		if ("edge5" in opt) {
 			this.edge5 = parseEdge(opt.edge5);
 		}
@@ -115,11 +120,12 @@ export class ModelBP {
 	/**
 	 * Return basepair as cytoscape edge element
 	 */
-	toCyElement() {
+	toCyEl() {
 		let el = {
 			"data": {
-				"source": this.partner5.ind,
-				"target": this.partner3.ind,
+				"id": this.getId(),
+				"source": this.partner5.getId(),
+				"target": this.partner3.getId(),
 				"label": this.getType()
 			},
 			"classes": ["basepair"],
@@ -137,4 +143,21 @@ export class ModelBP {
 		}
 	return el;
 	}
+
+	vIncrement(bpIncrement) {
+		let coeff = 1;
+		if (this.partner3.ind - this.partner5.ind == 1) {
+			// We need a negative value due to bezier edge strange behavior for adjacent nodes
+			coeff = -2;
+		}
+		return coeff * bpIncrement * (this.partner3.getCoords().x - this.partner5.getCoords().x);
+	}
+}
+
+export class AuxBP extends ModelBP {
+	name = "aux";
+}
+
+export class PlanarBP extends ModelBP {
+	name = "planar";
 }

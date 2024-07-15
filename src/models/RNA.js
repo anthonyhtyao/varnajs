@@ -1,13 +1,18 @@
 import _ from "lodash";
 
+import { ModelGroupRNA } from './modelDefault';
 import { ModelBase, ModelBaseStyle } from './modelBase';
-import { ModelBP } from './modelBP';
+import { PlanarBP, AuxBP } from './modelBP';
 import { drawBases } from '../layouts/layout';
 import { Layouts, VARNAConfig } from './config';
 import { ptableFromDBN, parseSeq } from '../utils/RNA';
 import { DiscontinuousBackbone } from './modelBackbone';
+import { BoundingBox } from '../utils/model';
+import { getCyId } from '../utils/cy';
+import { BaseClass, mix } from '../utils/mixin';
 
 const DBNStrandSep = "&";
+const BaseRadius = 10;
 
 /**
  * Simple dot-bracket notation parser
@@ -30,22 +35,16 @@ let parseDBN = function(dbn){
 };
 
 /**
- * Basic class to draw one RNA
- * @class
- * @constructor
- * @public
- * @property {cytoscape} cy - cytoscape drawing
- * @property {Array} baseList - Array of ModelBase
+ * RNA superclass for multi inheritance
  */
-export class RNA {
+export const RNASuper = (superclass) => class extends superclass {
+	panel = null;
 	name = null;
-	cy;
+	groupRNA = new ModelGroupRNA(this);
 	cfg;
 	baseList = [];
 	auxBPs = [];
 	baseStyleList = [];
-	constructor() {
-	}
 
 	// TODO: Refactor as VARNA
 	/**
@@ -87,11 +86,11 @@ export class RNA {
 		// Fill baseList
 		rna.baseList = new Array(ptable.length);
 		for (let i = 0; i < ptable.length; i++) {
-			let base = new ModelBase(i, i+1, seqFinal[i]);
+			let base = new ModelBase(i, i+1, seqFinal[i], rna);
 			// Next base belongs to another strand:w
 			//
 			if (sepPosLst.indexOf(i) >= 0) {
-				base.setBackbone(DiscontinuousBackbone);
+				base.setBackbone(new DiscontinuousBackbone());
 			}
 			rna.baseList[i] = base;
 		}
@@ -109,6 +108,27 @@ export class RNA {
 		return rna;
 	}
 
+	/**
+	 * Set RNA name
+	 * @param {string} name - object name
+	 */
+	setName(name) {
+		this.name = name;
+	}
+
+	/**
+	 * Get RNA name
+	 */
+	getName(name) {
+		if (this.name === null) {
+			return null
+		}
+		if ((this.panel !== null) && (this.panel.getName() !== null)) {
+			return `${this.panel.getName()}_${this.name}`;
+		}
+		return this.name;
+	}
+
 
 	/**
 	 * Set drawing configuration
@@ -122,37 +142,16 @@ export class RNA {
 	}
 
 	getSelector(inst) {
-		if (this.name === null) {
+		if (this.getName() === null) {
 			return inst;
 		}
 		let instNew = inst;
 		["node", "edge"].forEach((t) => {
 			if (inst.startsWith(t)) {
-				instNew = inst.replace(t, `${t}.${this.name}`);
+				instNew = inst.replace(t, `${t}.${this.getName()}`);
 			}
 		});
 		return instNew;
-	}
-
-	getCyId(id, type) {
-		let newId = (this.name === null) ? "" : `${this.name}_`;
-		switch (type) {
-			case "base":
-				newId += "";
-				break;
-			case "backbone":
-				newId += "backbone_";
-				break;
-			case "planar":
-				newId += "planarbp_";
-				break;
-			case "aux":
-				newId += "auxbp_";
-				break;
-			default:
-				throw new Error(`Unknown type: ${type}`);
-		}
-		return newId + id;
 	}
 
 	/*
@@ -182,7 +181,8 @@ export class RNA {
 	addBP(i, j, opt={}) {
 		let basei = this.getBase(i), basej = this.getBase(j);
 		// Create ModelBP object for basepair
-		let mbp = new ModelBP(basei, basej, opt);
+		let mbp = new AuxBP(basei, basej, opt, this);
+		mbp.group = this;
 		let indi, indj;
 		[indi, indj] = [Math.min(basei.ind, basej.ind), Math.max(basei.ind, basej.ind)]
 		// Add directly to aux
@@ -202,7 +202,7 @@ export class RNA {
 					}
 				}
 			}
-			this.addBPNow(basei, basej, mbp);
+			this.addBPNow(basei, basej, opt);
 		}
 	}
 
@@ -213,17 +213,16 @@ export class RNA {
 	addBPAux(i, j, mbp=null) {
 		let basei = this.getBase(i), basej = this.getBase(j);
 		if (mbp === null) {
-			mbp = new ModelBP(basei, basej);
+			mbp = new AuxBP(basei, basej);
 		}
+		mbp.group = this;
 		this.auxBPs.push(mbp);
 	}
 
 
-	addBPNow(i, j, mbp=null) {
+	addBPNow(i, j, opt={}) {
 		let basei = this.getBase(i), basej = this.getBase(j);
-		if (mbp === null) {
-			mbp = new ModelBP(basei, basej);
-		}
+		let mbp = new PlanarBP(basei, basej, opt, this);
 		basei.setBP(mbp);
 		basej.setBP(mbp);
 	}
@@ -278,30 +277,17 @@ export class RNA {
 	 */
 	elOfBases() {
 		let res = [];
+		// Draw compound node if parent group exist
+		if (this.group !== null) {
+			res.push(this.groupRNA.toCyEl());
+		}
+		
 		for (let i = 0; i < this.baseList.length; ++i) {
 			let base = this.baseList[i];
-			let baseEl = {
-				data: {
-					id: this.getCyId(base.ind, "base"),
-					label: base.c,
-					num: base.getBaseNum()
-				}
-			};
-			// Set custom base classes
-			baseEl['classes'] = [...base.classes];
-			if (this.name !== null) {
-				baseEl['classes'].push(this.name);
+			let baseEl = base.toCyEl(isNumberDrawn(base, this.cfg.baseNumPeriod, this.baseList.length));
+			if (this.group !== null) {
+				baseEl.data.parent = this.groupRNA.getId();
 			}
-			// Add baseNum class for node to draw base number
-			if (isNumberDrawn(base, this.cfg.baseNumPeriod, this.baseList.length)) {
-				baseEl["classes"].push("baseNum");
-			}
-			// Add class for base style
-			if (base.style !== null) {
-				baseEl["classes"].push(`basegroup${base.style.getId()}`);
-				baseEl["data"]["baseNumColor"] = base.style.baseNumColor;
-			}
-			baseEl['position'] = base.getCoords();
 			res.push(baseEl);
 		}
 		return res;
@@ -373,17 +359,17 @@ export class RNA {
 		let res = [];
 		for (let i = 0; i < this.baseList.length - 1; ++i) {
 			let backbone = this.baseList[i].getBackbone();
-			if (backbone != DiscontinuousBackbone) {
+			if (!(backbone instanceof DiscontinuousBackbone)) {
 				let el = {
 					"data": {
-						id: this.getCyId(i, 'backbone'),
-						source: this.getCyId(i, 'base'),
-						target: this.getCyId(i+1, 'base')
+						id: backbone.getId(),
+						source: this.baseList[i].getId(),
+						target: this.baseList[i+1].getId()
 					},
 					"classes": ["backbone"]
 				};
-				if (this.name !== null) {
-					el.classes.push(this.name);
+				if (this.getName() !== null) {
+					el.classes.push(this.getName());
 				}
 				res.push(el);
 			}
@@ -421,14 +407,10 @@ export class RNA {
 	 * Returns cytoscape edge element for one single bp
 	 */
 	elOfSingleBP(bp) {
-		let edgeEl = bp.toCyElement();
-		if (this.name !== null) {
-			edgeEl.classes.push(this.name);
+		let edgeEl = bp.toCyEl();
+		if (this.getName() !== null) {
+			edgeEl.classes.push(this.getName());
 		}
-		// Here, we need to correct source and target base id
-		edgeEl.data.source = this.getCyId(edgeEl.data.source, "base");
-		edgeEl.data.target = this.getCyId(edgeEl.data.target, "base");
-
 		return edgeEl;
 	}
 
@@ -443,15 +425,16 @@ export class RNA {
 			let j = base.getPartnerInd();
 			if (j > base.ind) {
 				let bp = base.getBP();
+				bp.ind = base.ind;
 				let edgeEl = this.elOfSingleBP(bp);
-				edgeEl.data.id = this.getCyId(base.ind, "planar");
+				// edgeEl.data.id = getCyId(this.getName(), base.ind, "planar");
 				edgeEl.classes.push("planarbp");
 				if (cfg.layout == Layouts.LINE) {
 					if (_.isUndefined(edgeEl.style)) {
 						edgeEl.style = {};
 					}
 					let factor = (cfg.bpLowerPlane) ? 1 : -1;
-					edgeEl.style["control-point-distance"] = factor * (bp.partner3.ind-bp.partner5.ind)*20;
+					edgeEl.style["control-point-distance"] = factor * bp.vIncrement(cfg.bpIncrement);  
 				}
 				res.push(edgeEl);
 			}
@@ -467,15 +450,16 @@ export class RNA {
 		let res = [];
 		for (let i = 0; i < this.auxBPs.length; i++) {
 			let bp = this.auxBPs[i];
+			bp.ind = i;
 			let edgeEl = this.elOfSingleBP(bp);
-			edgeEl.data.id = this.getCyId(i, "aux");
+			// edgeEl.data.id = getCyId(this.getName(), i, "aux");
 			edgeEl.classes.push("auxbp");
 			if (cfg.layout == Layouts.LINE) {
 				if (_.isUndefined(edgeEl.style)) {
 					edgeEl.style = {};
 				}
 				let factor = (cfg.bpLowerPlane) ? 1 : -1;
-				edgeEl.style["control-point-distance"] = factor * (bp.partner3.ind-bp.partner5.ind)*20;
+				edgeEl.style["control-point-distance"] = factor * bp.vIncrement(cfg.bpIncrement);
 			}
 			res.push(edgeEl);
 		}
@@ -489,10 +473,6 @@ export class RNA {
 		let cfg = this.cfg;
 		let res = [];
 		let generalStyle = cfg.bpCyStyle(this.getSelector("edge.basepair"));
-		if (cfg.layout == Layouts.LINE) {
-			generalStyle.style["curve-style"] = "unbundled-bezier";
-			generalStyle.style["control-point-weight"] = 0.5;
-		}
 		res.push(generalStyle);
 		return res;
 	}
@@ -504,27 +484,42 @@ export class RNA {
 	
 
 	createCyFormat() {
-		let cfg = this.cfg;
-		var coords = drawBases(this.baseList, cfg);
+		// Here we draw the layout
+		var coords = drawBases(this.baseList, this.cfg);
 
 		let basesCy = this.cyOfBases();
 		let backbonesCy = this.cyOfBackbones();
 		let bpsCy= this.cyOfBPs();
 
 		let elements = [...basesCy.el, ...backbonesCy.el, ...bpsCy.el];
-		let styles = [...basesCy.style, ...backbonesCy.style, ...bpsCy.style, ...this.customStyle()];
+		let styles = [...basesCy.style, ...backbonesCy.style, ...bpsCy.style];
 		
 		// Set layout (base position)
-		let layoutDict = {'name': 'preset'};
-		let cyDist = {
-  	  elements: elements,
-			layout: layoutDict,
-			style: styles
-  	 };
-		return cyDist;	
+		return {elements: elements, style: styles};
 	}
 
+	/**
+	 * Return RNA drawing bounding box
+	 * Make sure each base coords is computed in prior
+	 */
+	getBoundingBox() {
+		let r = BaseRadius;
+		let c = this.baseList[0].getCoords();
+		let bbox = new BoundingBox(c.x - r, c.x + r, c.y - r, c.y + r);
+		this.baseList.forEach((base) => bbox.updateFromCoords(base.getCoords(), r));
+		return bbox;
+	}
 }
+
+/**
+ * Basic class to draw one RNA
+ * @class
+ * @constructor
+ * @public
+ * @property {cytoscape} cy - cytoscape drawing
+ * @property {Array} baseList - Array of ModelBase
+ */
+export class RNA extends mix(BaseClass).with(RNASuper) {}
 
 /**
  * Return true to show number of given base

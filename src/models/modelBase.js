@@ -1,7 +1,8 @@
 import _ from "lodash";
 
+import { ModelDefault } from './modelDefault';
 import { ModelBP } from './modelBP';
-import { DefaultBackbone } from './modelBackbone';
+import { ModelBackbone, DefaultBackbone } from './modelBackbone';
 
 /**
  * ModelBase represents one base in RNA
@@ -14,19 +15,23 @@ import { DefaultBackbone } from './modelBackbone';
  * @property {ModelBase} partner - index of canonical bp partner, -1 means unpaired
  * @property {bool|null} nested - true if basepair is nested
  */
-export class ModelBase {
+export class ModelBase extends ModelDefault {
+	name = "base";
 	bp = null;
 	nested = null;
 	coords = {x: null, y: null};
 	center = {x: null, y: null};
 	style = null;
-	bacbone = DefaultBackbone;
+	backbone = null;
 	classes = [];
-	constructor(ind, bn, label) {
+	constructor(ind, bn, label, rna=null) {
+		super();
 		this.ind = ind;
 		this.realInd = bn;
 		this.c = label;
+		this.group = rna;
 	}
+
 
 	/**
 	 * Set planar basepair
@@ -73,7 +78,7 @@ export class ModelBase {
 		this.coords.y = coords.y;
 	}
 
-	getCoords(coords) {
+	getCoords() {
 		return {x: this.coords.x, y: this.coords.y};
 	}
 
@@ -87,19 +92,50 @@ export class ModelBase {
 	}
 
 	setBackbone(backbone) {
+		if (!(backbone instanceof ModelBackbone)) {
+			throw new Error("Input needs to be an instance of ModelBackbone");
+		}
+		backbone.ind = this.ind;
+		backbone.group = this.group;
 		this.backbone = backbone;
 	}
 
-	getBackbone(backbone) {
+	getBackbone() {
+		// Create default backbone missing
+		if (this.backbone === null) {
+			this.setBackbone(new DefaultBackbone());
+		}
 		return this.backbone;
-	}
-
-	getBackboneiType(backbone) {
-		return this.backbone.getType();
 	}
 
 	addCustomClass(inst) {
 		this.classes.push(inst);
+	}
+
+	toCyEl(withNum) {
+		let el = {
+			data: {
+				id: this.getId(),
+				label: this.c,
+				num: this.getBaseNum()
+			}
+		};
+		// Set base classes
+		el['classes'] = [...this.classes];
+		if (this.group.getName() !== null) {
+			el['classes'].push(this.group.getName());
+		}
+		// Add baseNum class for node to draw base number
+		if (withNum) {
+			el["classes"].push("baseNum");
+		}
+		// Add class for base style
+		if (this.style !== null) {
+			el["classes"].push(`basegroup${this.style.getId()}`);
+			el["data"]["baseNumColor"] = this.style.baseNumColor;
+		}
+		el['position'] = this.getCoords();
+		return el;
 	}
 }
 
