@@ -18,8 +18,8 @@ export class PlaneCompare extends Panel {
 		this.addRNA(rna2);
 	}
 
-	addInterBP(basei, basej, opt={}) {
-		throw new Error("PlaneCompare object does not support addInterBP. Use RNA.addBP instead.");
+	addBP(basei, basej, opt={}) {
+		throw new Error("PlaneCompare object does not support addBP. Use RNA.addBP instead.");
 	}
 
 	cyOfRNAs() {

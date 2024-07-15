@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { VARNAConfig } from "../models/config";
 import { ModelBaseStyle } from "../models/modelBase";
-import { Structure } from "./structure";
+import { SingleDraw } from "./singleDraw";
 
 
 /**
@@ -13,17 +13,12 @@ export class MotifConfig extends VARNAConfig {
 	dummyBaseStyle = new ModelBaseStyle({baseInnerColor: "#DDDDDD", baseOutlineColor: "white"});
 	rootBPStyle = {color: "black", thickness: 2};
 	dummyBPStyle = {color: "#DDDDDD"};
-
-	constructor (opt={}) {
-		super();
-		Object.assign(this, opt);
-	}
 }
 
 /**
  * Motif drawing class
  */
-export class Motif extends Structure {
+export class Motif extends SingleDraw {
 	cfg = new MotifConfig();
 
 	static fromDBN(dbn, seq="") {
@@ -62,9 +57,11 @@ export class Motif extends Structure {
 	}
 
 
-	customStyle() {
+	createCyFormat() {
+		let res = super.createCyFormat();
 		let dummy = this.cfg.dummyBaseStyle.toCyStyleInList(this.getSelector(`node.dummy`));
 		let root = this.cfg.rootBaseStyle.toCyStyleInList(this.getSelector(`node.root`));
-		return [...dummy, ...root];
+		res.style.push(...dummy, ...root);
+		return res;
 	}
 }

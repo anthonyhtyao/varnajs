@@ -62,8 +62,8 @@ export const BASEPAIR_THICKNESS_DEFAULT = 1;
  * @property {bool} drawBases - base visibility (default: true)
  * @property {bool} drawBacbone - backbone visibility (default: true)
  * @property {bool} autoGroupPos - flag to automatically determine each RNA group position (default: true)
- * @property {float} groupNodePadding - padding of group node to other nodes in the same RNA (default: 10)
- * @property {float} groupNodeMargin - Margin of group node to other group nodes (default: 10)
+ * @property {float} groupRNAPadding - padding of group node to other nodes in the same RNA (default: 10)
+ * @property {float} groupRNAMargin - Margin of group node to other group nodes (default: 10)
  * @property {Puzzler} puzzler - puzzler setting
  */
 export class VARNAConfig {
@@ -101,8 +101,8 @@ export class VARNAConfig {
 
 	// Multiple RNAs related settings
 	autoGroupPos=true;
-	groupNodePadding=10;
-	groupNodeMargin=10;
+	groupRNAPadding=10;
+	groupRNAMargin=10;
 
 	// RNApuzzler config
 	puzzler = new Puzzler();
@@ -194,11 +194,11 @@ export class VARNAConfig {
 	/**
 	 * Create general cytoscape style for group node
 	 */
-	groupNodeCyStyle() {
+	groupRNACyStyle() {
 		let style = {
-		  "selector": `.groupNode`,
+		  "selector": `.groupRNA`,
 		  "style": {
-		  	"padding": this.groupNodePadding,
+		  	"padding": this.groupRNAPadding,
 				"background-opacity": 0,
 				"border-opacity": 0,
 		  },
@@ -211,7 +211,7 @@ export class VARNAConfig {
 	 * This function calls each style function with default argument
 	 */
 	generalCyStyle() {
-		return [this.baseCyStyle(), this.backboneCyStyle(), this.bpCyStyle(), this.groupNodeCyStyle()];
+		return [this.baseCyStyle(), this.backboneCyStyle(), this.bpCyStyle(), this.groupRNACyStyle()];
 	}
 }
 

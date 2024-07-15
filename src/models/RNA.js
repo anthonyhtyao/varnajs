@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-import { ModelGroupNode } from './modelDefault';
+import { ModelGroupRNA } from './modelDefault';
 import { ModelBase, ModelBaseStyle } from './modelBase';
 import { PlanarBP, AuxBP } from './modelBP';
 import { drawBases } from '../layouts/layout';
@@ -38,10 +38,9 @@ let parseDBN = function(dbn){
  * RNA superclass for multi inheritance
  */
 export const RNASuper = (superclass) => class extends superclass {
-	group = null;
+	panel = null;
 	name = null;
-	groupNode = new ModelGroupNode(this);
-	cy;
+	groupRNA = new ModelGroupRNA(this);
 	cfg;
 	baseList = [];
 	auxBPs = [];
@@ -124,8 +123,8 @@ export const RNASuper = (superclass) => class extends superclass {
 		if (this.name === null) {
 			return null
 		}
-		if ((this.group !== null) && (this.group.getName() !== null)) {
-			return `${this.group.getName()}_${this.name}`;
+		if ((this.panel !== null) && (this.panel.getName() !== null)) {
+			return `${this.panel.getName()}_${this.name}`;
 		}
 		return this.name;
 	}
@@ -280,14 +279,14 @@ export const RNASuper = (superclass) => class extends superclass {
 		let res = [];
 		// Draw compound node if parent group exist
 		if (this.group !== null) {
-			res.push(this.groupNode.toCyEl());
+			res.push(this.groupRNA.toCyEl());
 		}
 		
 		for (let i = 0; i < this.baseList.length; ++i) {
 			let base = this.baseList[i];
 			let baseEl = base.toCyEl(isNumberDrawn(base, this.cfg.baseNumPeriod, this.baseList.length));
 			if (this.group !== null) {
-				baseEl.data.parent = this.groupNode.getId();
+				baseEl.data.parent = this.groupRNA.getId();
 			}
 			res.push(baseEl);
 		}
@@ -485,24 +484,18 @@ export const RNASuper = (superclass) => class extends superclass {
 	
 
 	createCyFormat() {
-		let cfg = this.cfg;
-		var coords = drawBases(this.baseList, cfg);
+		// Here we draw the layout
+		var coords = drawBases(this.baseList, this.cfg);
 
 		let basesCy = this.cyOfBases();
 		let backbonesCy = this.cyOfBackbones();
 		let bpsCy= this.cyOfBPs();
 
 		let elements = [...basesCy.el, ...backbonesCy.el, ...bpsCy.el];
-		let styles = [...basesCy.style, ...backbonesCy.style, ...bpsCy.style, ...this.customStyle()];
+		let styles = [...basesCy.style, ...backbonesCy.style, ...bpsCy.style];
 		
 		// Set layout (base position)
-		let layoutDict = {'name': 'preset'};
-		let cyDist = {
-  	  elements: elements,
-			layout: layoutDict,
-			style: styles
-  	 };
-		return cyDist;	
+		return {elements: elements, style: styles};
 	}
 
 	/**

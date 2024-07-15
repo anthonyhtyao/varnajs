@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import cytoscape from 'cytoscape';
 import pack from 'pack';
-import { RNA } from "../models/RNA";
+import { RNA, RNASuper } from "../models/RNA";
 import { getCyId } from "../utils/cy";
 import { AuxBP } from "../models/modelBP";
 import { VARNAConfig } from "../models/config";
@@ -11,12 +11,13 @@ import { BaseClass, mix } from '../utils/mixin';
 /**
  * Panel superclass for multiple inheritance
  */
-const PanelSuper = (superclass) => class extends superclass {
+export const PanelSuper = (superclass) => class extends superclass {
 	name = null;
 	rnaList = [];
 	rnaLimit = null;
 	cfg = new VARNAConfig();
 	auxBPs = [];
+	cy = null;
 
 	/**
 	 * Set object name
@@ -95,13 +96,13 @@ const PanelSuper = (superclass) => class extends superclass {
 	 * @param {ModelBase} basej - base j in ModelBase
 	 * @param {Object} opt - options to create ModelBP
 	 */
-	addInterBP(basei, basej, opt={}) {
+	addBPAux(basei, basej, opt={}) {
 		let mbp = new AuxBP(basei, basej, opt);
 		mbp.group = this;
 		this.auxBPs.push(mbp);
 	}
 
-	elOfInterBPs() {
+	elOfAuxBPs() {
 		let res = [];
 		for (let i = 0; i < this.auxBPs.length; i++) {
 			let bp = this.auxBPs[i];
@@ -117,13 +118,14 @@ const PanelSuper = (superclass) => class extends superclass {
 	/**
 	 * Returns cytoscape elements and styles of all RNAs
 	 */
-	cyOfRNAs() {
+	createCyFormat() {
 		let res = {'elements': [], 'style': []};
 		this.rnaList.forEach((rna) => {
 			let dist = rna.createCyFormat();
 			res.elements.push(...dist.elements);
 			res.style.push(...dist.style);
 		});	
+		res.elements.push(...this.elOfAuxBPs());
 		return res;
 	}
 
@@ -132,8 +134,8 @@ const PanelSuper = (superclass) => class extends superclass {
 	* Compute each RNA position using simple rectangle packing algorithm with pack (npm)
 	*/
 	packRNAs() {
-		let padding = this.cfg.groupNodePadding;
-		let margin = this.cfg.groupNodeMargin;
+		let padding = this.cfg.groupRNAPadding;
+		let margin = this.cfg.groupRNAMargin;
 		let dist = 2 * (padding + margin);
 		let rnaSizes = this.rnaList.map((rna) => {
 			let box = rna.getBoundingBox().getSize();
@@ -147,21 +149,23 @@ const PanelSuper = (superclass) => class extends superclass {
 	 * Create cytoscape object
 	 */
 	draw(container) {
-		let t = this.cyOfRNAs();
 		let cyDist = {
 			'container': container,
-			'elements': [...t.elements, ...this.elOfInterBPs()],
-			'style': [...this.cfg.generalCyStyle(), ...t.style],
 			'layout': {'name': 'preset'},
-		};
+			'elements': [],
+			'style': [...this.cfg.generalCyStyle()],
+		}
+		let t = this.createCyFormat();
+		cyDist.elements.push(...t.elements);
+		cyDist.style.push(...t.style);
 		var cy = cytoscape(cyDist);
 		this.cy = cy;
 		if (this.rnaList.length > 1) {
-			// Shift each RNA to their positio
+			// Shift each RNA to their position
 			if (this.cfg.autoGroupPos) {
 				this.packRNAs();
 			}
-			let groups = this.cy.nodes('.groupNode');
+			let groups = this.cy.nodes('.groupRNA');
 			for (let i = 0; i < groups.length; i++) {
 				let end = this.getPosOfRNA(i);
 				// no shift
@@ -171,8 +175,8 @@ const PanelSuper = (superclass) => class extends superclass {
 				let bbox = this.rnaList[i].getBoundingBox();
 				// we need this pos to be moved to rectangle packer result
 				let start = {
-					x: bbox.xMin - this.cfg.groupNodePadding,
-					y: bbox.yMax + this.cfg.groupNodePadding,
+					x: bbox.xMin - this.cfg.groupRNAPadding,
+					y: bbox.yMax + this.cfg.groupRNAPadding,
 				};
 				groups[i].shift(toFactor(start, end));
 			}
@@ -185,11 +189,3 @@ const PanelSuper = (superclass) => class extends superclass {
  * General Draw Panel class
  */
 export class Panel extends mix(BaseClass).with(PanelSuper) {}
-
-//////////////
-//          //
-//  Single  //
-//          //
-//////////////
-//
-// Here we create a special panel that only takes one RNA by multi inheritance (mixin)
