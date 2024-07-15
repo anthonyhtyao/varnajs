@@ -37,7 +37,7 @@
 						let seq = getSeq(out1[pdbid]);
 						let v = varnajs.Structure.fromEBIJson(seq.length, out, seq);
 						v.setConfig(new varnajs.VARNAConfig());
-	      		v.createCy(document.getElementById("cy"));
+	      		v.draw(document.getElementById("cy"));
 						})
 						.catch(err => console.log(err));
 						

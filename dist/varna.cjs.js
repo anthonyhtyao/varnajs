@@ -17211,6 +17211,82 @@ lodash.exports;
 var lodashExports = lodash.exports;
 var _ = /*@__PURE__*/getDefaultExportFromCjs(lodashExports);
 
+// Cytoscape related function
+
+/**
+ * Return cytoscape id for given object, base, basepair, backbone etc
+ */
+function getCyId(obj) {
+  // user defined id
+  if (!_.isUndefined(obj.id)) {
+    return obj.id;
+  }
+  if (_.isUndefined(obj.ind)) {
+    throw new Error("Object index in undefined");
+  }
+  let res = [];
+  // Object (multi) RNA group
+  if (obj.group.getName() !== null) {
+    res.push(obj.group.getName());
+  }
+  // Object type
+  res.push(obj.name);
+  // Object index	
+  if (obj.ind !== null) {
+    res.push(obj.ind);
+  }
+  return res.join("_");
+}
+
+// Default model object used in varnajs
+// The object defines basic property for base, basepair etc
+
+class ModelDefault {
+  name = "default";
+  group = null;
+
+  /**
+   * Define base id
+   * @param {string} id - base id
+   */
+  setId(id) {
+    this.id = id;
+  }
+
+  /**
+   * Get base id
+   * returns default id if base id is undefined
+   */
+  getId() {
+    return getCyId(this);
+  }
+
+  /**
+   * Returns object in cytoscape element format
+   * @abstract
+   */
+  toCyEl() {
+    throw new Error("Method 'toCyEl' must be implemented.");
+  }
+}
+class ModelGroupRNA extends ModelDefault {
+  name = "group";
+  ind = null;
+  constructor(rna) {
+    super();
+    this.group = rna;
+  }
+  toCyEl() {
+    let el = {
+      data: {
+        id: this.getId()
+      },
+      classes: ["groupRNA"]
+    };
+    return el;
+  }
+}
+
 // import {BASEPAIR_COLOR_DEFAULT, BASEPAIR_THICKNESS_DEFAULT} from "./config";
 
 // Here we list all possible label in lower case for each edge
@@ -17233,6 +17309,7 @@ const STERICITY = Object.freeze({
 
 /**
  * Convert edge label to edge type
+ * @private
  * @param {string} label - edge label
  */
 function parseEdge(label) {
@@ -17250,6 +17327,7 @@ function parseEdge(label) {
 
 /**
  * Convert stericity label to stericity type
+ * @private
  * @param {string} label - stericity label
  */
 function parseStericity(label) {
@@ -17266,7 +17344,8 @@ function parseStericity(label) {
 /**
  * ModelBP represents a basepair
  */
-class ModelBP {
+class ModelBP extends ModelDefault {
+  name = "basepair";
   partner5;
   partner3;
   edge5 = EDGE.WC;
@@ -17279,9 +17358,12 @@ class ModelBP {
   // color = BASEPAIR_COLOR_DEFAULT;
   thickness = null;
   color = null;
-  constructor(part5, part3, opt = {}) {
+  // ind = null;
+  constructor(part5, part3, opt = {}, rna = null) {
+    super();
     this.partner5 = part5;
     this.partner3 = part3;
+    this.group = rna;
     if ("edge5" in opt) {
       this.edge5 = parseEdge(opt.edge5);
     }
@@ -17321,11 +17403,12 @@ class ModelBP {
   /**
    * Return basepair as cytoscape edge element
    */
-  toCyElement() {
+  toCyEl() {
     let el = {
       "data": {
-        "source": this.partner5.ind,
-        "target": this.partner3.ind,
+        "id": this.getId(),
+        "source": this.partner5.getId(),
+        "target": this.partner3.getId(),
         "label": this.getType()
       },
       "classes": ["basepair"]
@@ -17342,29 +17425,34 @@ class ModelBP {
     }
     return el;
   }
+  vIncrement(bpIncrement) {
+    let coeff = 1;
+    if (this.partner3.ind - this.partner5.ind == 1) {
+      // We need a negative value due to bezier edge strange behavior for adjacent nodes
+      coeff = -2;
+    }
+    return coeff * bpIncrement * (this.partner3.getCoords().x - this.partner5.getCoords().x);
+  }
+}
+class AuxBP extends ModelBP {
+  name = "aux";
+}
+class PlanarBP extends ModelBP {
+  name = "planar";
 }
 
-class ModelBackbone {
-  type = "custom";
+class ModelBackbone extends ModelDefault {
+  name = "backbone";
   color = null;
   thickness = null;
   style = null;
   constructor(opt = {}) {
+    super();
     Object.assign(this, opt);
   }
-  getType() {
-    return this.type;
-  }
 }
-const DefaultBackbone = Object.freeze(new ModelBackbone({
-  type: "default"
-}));
-const DiscontinuousBackbone = Object.freeze(new ModelBackbone({
-  type: "discontinuous"
-}));
-Object.freeze(new ModelBackbone({
-  type: "missing"
-}));
+class DefaultBackbone extends ModelBackbone {}
+class DiscontinuousBackbone extends ModelBackbone {}
 
 /**
  * ModelBase represents one base in RNA
@@ -17377,7 +17465,8 @@ Object.freeze(new ModelBackbone({
  * @property {ModelBase} partner - index of canonical bp partner, -1 means unpaired
  * @property {bool|null} nested - true if basepair is nested
  */
-class ModelBase {
+class ModelBase extends ModelDefault {
+  name = "base";
   bp = null;
   nested = null;
   coords = {
@@ -17389,12 +17478,14 @@ class ModelBase {
     y: null
   };
   style = null;
-  bacbone = DefaultBackbone;
+  backbone = null;
   classes = [];
-  constructor(ind, bn, label) {
+  constructor(ind, bn, label, rna = null) {
+    super();
     this.ind = ind;
     this.realInd = bn;
     this.c = label;
+    this.group = rna;
   }
 
   /**
@@ -17435,7 +17526,7 @@ class ModelBase {
     this.coords.x = coords.x;
     this.coords.y = coords.y;
   }
-  getCoords(coords) {
+  getCoords() {
     return {
       x: this.coords.x,
       y: this.coords.y
@@ -17448,16 +17539,47 @@ class ModelBase {
     return this.style;
   }
   setBackbone(backbone) {
+    if (!(backbone instanceof ModelBackbone)) {
+      throw new Error("Input needs to be an instance of ModelBackbone");
+    }
+    backbone.ind = this.ind;
+    backbone.group = this.group;
     this.backbone = backbone;
   }
-  getBackbone(backbone) {
+  getBackbone() {
+    // Create default backbone missing
+    if (this.backbone === null) {
+      this.setBackbone(new DefaultBackbone());
+    }
     return this.backbone;
-  }
-  getBackboneiType(backbone) {
-    return this.backbone.getType();
   }
   addCustomClass(inst) {
     this.classes.push(inst);
+  }
+  toCyEl(withNum) {
+    let el = {
+      data: {
+        id: this.getId(),
+        label: this.c,
+        num: this.getBaseNum()
+      }
+    };
+    // Set base classes
+    el['classes'] = [...this.classes];
+    if (this.group.getName() !== null) {
+      el['classes'].push(this.group.getName());
+    }
+    // Add baseNum class for node to draw base number
+    if (withNum) {
+      el["classes"].push("baseNum");
+    }
+    // Add class for base style
+    if (this.style !== null) {
+      el["classes"].push(`basegroup${this.style.getId()}`);
+      el["data"]["baseNumColor"] = this.style.baseNumColor;
+    }
+    el['position'] = this.getCoords();
+    return el;
   }
 }
 
@@ -17588,11 +17710,14 @@ const BASEPAIR_THICKNESS_DEFAULT = 1;
  * VARNAConfig defines the style of drawing
  * @class
  * @public
- * @property {string} layout - base layout (default: Layouts.RADIATE)
+ * @property {string} layout - base layout within one RNA (default: Layouts.RADIATE)
  * @property {int} spaceBetweenBases - multiplier for base spacing
  * @property {int} bpDistance - distance between paired bases (length of canonical basepair)
  * @property {int} backboneLoop - backbone distance within a loop (radiate, turtle, puzzler)
  * @property {int} backboneMultiLoop - backbone distance within a multiloop for radiate layout
+ * @property {bool} flatExteriorLoop - draw flat exterior loop in radiate mode (default: true)
+ * @property {bool} straightBulges - draw straight bulge in radiate mode (default: false)
+ * @property {float} bpIncrement - vertical increment in line mode (default: 0.65)
  * @property {string} baseNameColor - color of base name, i.e. nucleotide (default: rgb(64, 64, 64))
  * @property {string} baseInnerColor - color to fill base (default: rgb(242, 242, 242))
  * @property {string} baseOutlineColor - color of base border (default: rgb(91, 91, 91))
@@ -17606,6 +17731,9 @@ const BASEPAIR_THICKNESS_DEFAULT = 1;
  * @property {bool} bpLowerPlane - draw basepair in lower plane in linear layout (default: false)
  * @property {bool} drawBases - base visibility (default: true)
  * @property {bool} drawBacbone - backbone visibility (default: true)
+ * @property {bool} autoGroupPos - flag to automatically determine each RNA group position (default: true)
+ * @property {float} groupRNAPadding - padding of group node to other nodes in the same RNA (default: 10)
+ * @property {float} groupRNAMargin - Margin of group node to other group nodes (default: 10)
  * @property {Puzzler} puzzler - puzzler setting
  */
 class VARNAConfig {
@@ -17615,6 +17743,9 @@ class VARNAConfig {
   bpDistance = 65;
   backboneLoop = 40;
   backboneMultiLoop = 35;
+  flatExteriorLoop = true;
+  straightBulges = false;
+  bpIncrement = 0.65;
 
   // Base label
   baseNameColor = BASE_NAME_COLOR_DEFAULT;
@@ -17637,6 +17768,12 @@ class VARNAConfig {
   // Visibility 
   drawBases = true;
   drawBackbone = true;
+
+  // Multiple RNAs related settings
+  autoGroupPos = true;
+  groupRNAPadding = 10;
+  groupRNAMargin = 10;
+
   // RNApuzzler config
   puzzler = new Puzzler();
 
@@ -17688,7 +17825,7 @@ class VARNAConfig {
    * Create general cytoscape style for backbone
    * @param {string} selector - backbone selector (default: "edge.backbone")
    */
-  backboneCyStyle(selector = "edge.bacbone") {
+  backboneCyStyle(selector = "edge.backbone") {
     let style = {
       "selector": `${selector}`,
       "style": {
@@ -17701,25 +17838,58 @@ class VARNAConfig {
   }
 
   /**
-   * Create general cytoscape style forbasepair 
+   * Create general cytoscape style for basepair 
    * @param {string} selector - basepair selector (default: "edge.basepair")
    */
-  bpCyStyle(selector = "edge.bacbone") {
+  bpCyStyle(selector = "edge.basepair") {
     let style = {
       "selector": `${selector}`,
       "style": {
         "line-color": this.bpColor,
         "width": this.bpThickness
+      },
+      "data": {
+        layout: this.layout
+      }
+    };
+    if (this.layout == Layouts.LINE) {
+      let dir = this.bpLowerPlane ? "" : "-";
+      style.style["curve-style"] = "unbundled-bezier";
+      style.style["control-point-weight"] = 0.5;
+      style.style["source-endpoint"] = `0 ${dir}10`;
+      style.style["target-endpoint"] = `0 ${dir}10`;
+    }
+    return style;
+  }
+
+  /**
+   * Create general cytoscape style for group node
+   */
+  groupRNACyStyle() {
+    let style = {
+      "selector": `.groupRNA`,
+      "style": {
+        "padding": this.groupRNAPadding,
+        "background-opacity": 0,
+        "border-opacity": 0
       }
     };
     return style;
+  }
+
+  /**
+   * Simple function to create general style
+   * This function calls each style function with default argument
+   */
+  generalCyStyle() {
+    return [this.baseCyStyle(), this.backboneCyStyle(), this.bpCyStyle(), this.groupRNACyStyle()];
   }
 }
 
 /**
  * Special configuration for RNApuzzler
  * @class
- * @public
+ * @private
  * @property {bool} checkExteriorIntersections - flag for no interaction with exterior loop (default: true)
  * @property {bool} checkSiblingIntersections - flag for no interaction with sibling loops default: true)
  * @property {bool} checkAncestorIntersections - flag for no interaction with ancestor loops (default: true)
@@ -17758,6 +17928,8 @@ let drawRadiate = function (baseList, varnaCfg) {
   var angles = [];
   let dirAngle = -1;
   let spaceBetweenBases = varnaCfg.spaceBetweenBases;
+  let BASE_PAIR_DISTANCE = varnaCfg.bpDistance;
+  let MULTILOOP_DISTANCE = varnaCfg.backboneMultiLoop;
   for (let i = 0; i < baseList.length; i++) {
     coords[i] = {
       x: 0,
@@ -17768,9 +17940,36 @@ let drawRadiate = function (baseList, varnaCfg) {
       y: 0
     };
   }
-  // TODO: Flat exteriorloop
-  // Currently we ignore flat exteriorloop
-  drawLoop(0, baseList.length - 1, 0, 0, dirAngle, coords, centers, angles, baseList, varnaCfg);
+  if (varnaCfg.flatExteriorLoop) {
+    dirAngle += 1 - Math.PI / 2.0;
+    let i = 0;
+    let x = 0.0,
+      y = 0.0;
+    let vx = -Math.sin(dirAngle),
+      vy = Math.cos(dirAngle);
+    while (i < baseList.length) {
+      coords[i].x = x;
+      coords[i].y = y;
+      centers[i].x = x + BASE_PAIR_DISTANCE * vy;
+      centers[i].y = y + BASE_PAIR_DISTANCE * vx;
+      let j = baseList[i].getPartnerInd();
+      if (j > i) {
+        drawLoop(i, j, x + BASE_PAIR_DISTANCE * vx / 2.0, y + BASE_PAIR_DISTANCE * vy / 2.0, dirAngle, coords, centers, angles, baseList, varnaCfg);
+        centers[i].x = coords[i].x + BASE_PAIR_DISTANCE * vy;
+        centers[i].y = y - BASE_PAIR_DISTANCE * vx;
+        i = j;
+        x += BASE_PAIR_DISTANCE * vx;
+        y += BASE_PAIR_DISTANCE * vy;
+        centers[i].x = coords[i].x + BASE_PAIR_DISTANCE * vy;
+        centers[i].y = y - BASE_PAIR_DISTANCE * vx;
+      }
+      x += MULTILOOP_DISTANCE * vx;
+      y += MULTILOOP_DISTANCE * vy;
+      i += 1;
+    }
+  } else {
+    drawLoop(0, baseList.length - 1, 0, 0, dirAngle, coords, centers, angles, baseList, varnaCfg);
+  }
   for (let i = 0; i < coords.length; i++) {
     coords[i].x *= spaceBetweenBases;
     coords[i].y *= spaceBetweenBases;
@@ -17785,7 +17984,7 @@ let drawLoop = function (i, j, x, y, dirAngle, coords, centers, angles, baseList
   let BASE_PAIR_DISTANCE = varnaCfg.bpDistance;
   let LOOP_DISTANCE = varnaCfg.backboneLoop;
   let MULTILOOP_DISTANCE = varnaCfg.backboneMultiLoop;
-  let straightBulges = true;
+  let straightBulges = varnaCfg.straightBulges;
   // BasePaired
   if (baseList[i].getPartnerInd() == j) {
     let normalAngle = Math.PI / 2.0;
@@ -19247,12 +19446,12 @@ let drawCircle = function (baseList, varnaCfg) {
   let BASE_RADIUS = 10;
   let spaceBetweenBases = varnaCfg.spaceBetweenBases;
   let l = baseList.length;
-  let radius = Math.round(3 * (l + 1) * BASE_RADIUS) / (2 * Math.PI) * spaceBetweenBases;
+  let radius = Math.floor(3 * (l + 1) * BASE_RADIUS / (2 * Math.PI));
   for (let i = 0; i < l; i++) {
-    let angle = -(-(i + 1) * 2 * Math.PI) / (l + 1 - Math.PI / 2);
+    let angle = -(-(i + 1) * 2 * Math.PI / (l + 1) - Math.PI / 2);
     coords[i] = {
-      x: radius * Math.cos(angle),
-      y: radius * Math.sin(angle)
+      x: radius * Math.cos(angle) * spaceBetweenBases,
+      y: radius * Math.sin(angle) * spaceBetweenBases
     };
   }
   return coords;
@@ -24947,6 +25146,13 @@ function determineNucleotideCoordinates(node, ptable, length, unpairedDistance, 
   return;
 }
 
+function toFactor(coords1, coords2) {
+  return {
+    x: coords2.x - coords1.x,
+    y: coords2.y - coords1.y
+  };
+}
+
 let layouts = {
   'line': drawLine,
   'circle': drawCircle,
@@ -24961,7 +25167,7 @@ let drawBases = function (baseList, varnaCfg) {
   if (layoutNames.includes(layout)) {
     let coords = layouts[layout](baseList, varnaCfg);
     for (let i = 0; i < baseList.length; i++) {
-      baseList[i].setCoords(coords[i]);
+      baseList[i].setCoords(toFactor(coords[0], coords[i]));
     }
     return coords;
   } else {
@@ -25035,24 +25241,59 @@ function parseSeq(seq) {
   return analyzedSeq;
 }
 
+class BoundingBox {
+  xMin;
+  xMax;
+  yMin;
+  yMax;
+  constructor(xMin, xMax, yMin, yMax) {
+    this.xMin = xMin;
+    this.xMax = xMax;
+    this.yMin = yMin;
+    this.yMax = yMax;
+  }
+  updateFromCoords(coords, radius = 0) {
+    this.xMin = Math.min(this.xMin, coords.x - radius);
+    this.xMax = Math.max(this.xMax, coords.x + radius);
+    this.yMin = Math.min(this.yMin, coords.y - radius);
+    this.yMax = Math.max(this.yMax, coords.y + radius);
+  }
+  getSize() {
+    return {
+      w: this.xMax - this.xMin,
+      h: this.yMax - this.yMin
+    };
+  }
+}
+
+// from https://rasaturyan.medium.com/multiple-inheritance-in-javascript-es6-4999e4b6584c
+//
+
+class BaseClass {}
+class MixinBuilder {
+  constructor(superclass) {
+    this.superclass = superclass;
+  }
+  with(...mixins) {
+    return mixins.reduce((c, mixin) => mixin(c), this.superclass);
+  }
+}
+const mix = superclass => new MixinBuilder(superclass);
+
 const DBNStrandSep = "&";
+const BaseRadius = 10;
 
 /**
- * Basic class to draw one RNA
- * @class
- * @constructor
- * @public
- * @property {cytoscape} cy - cytoscape drawing
- * @property {Array} baseList - Array of ModelBase
+ * RNA superclass for multi inheritance
  */
-class RNA {
+const RNASuper = superclass => class extends superclass {
+  panel = null;
   name = null;
-  cy;
+  groupRNA = new ModelGroupRNA(this);
   cfg;
   baseList = [];
   auxBPs = [];
   baseStyleList = [];
-  constructor() {}
 
   // TODO: Refactor as VARNA
   /**
@@ -25094,11 +25335,11 @@ class RNA {
     // Fill baseList
     rna.baseList = new Array(ptable.length);
     for (let i = 0; i < ptable.length; i++) {
-      let base = new ModelBase(i, i + 1, seqFinal[i]);
+      let base = new ModelBase(i, i + 1, seqFinal[i], rna);
       // Next base belongs to another strand:w
       //
       if (sepPosLst.indexOf(i) >= 0) {
-        base.setBackbone(DiscontinuousBackbone);
+        base.setBackbone(new DiscontinuousBackbone());
       }
       rna.baseList[i] = base;
     }
@@ -25117,6 +25358,27 @@ class RNA {
   }
 
   /**
+   * Set RNA name
+   * @param {string} name - object name
+   */
+  setName(name) {
+    this.name = name;
+  }
+
+  /**
+   * Get RNA name
+   */
+  getName(name) {
+    if (this.name === null) {
+      return null;
+    }
+    if (this.panel !== null && this.panel.getName() !== null) {
+      return `${this.panel.getName()}_${this.name}`;
+    }
+    return this.name;
+  }
+
+  /**
    * Set drawing configuration
    * @param {VARNAConfig} cfg - configuration to draw
    */
@@ -25127,36 +25389,16 @@ class RNA {
     this.cfg = cfg;
   }
   getSelector(inst) {
-    if (this.name === null) {
+    if (this.getName() === null) {
       return inst;
     }
     let instNew = inst;
     ["node", "edge"].forEach(t => {
       if (inst.startsWith(t)) {
-        instNew = inst.replace(t, `${t}.${this.name}`);
+        instNew = inst.replace(t, `${t}.${this.getName()}`);
       }
     });
     return instNew;
-  }
-  getCyId(id, type) {
-    let newId = this.name === null ? "" : `${this.name}_`;
-    switch (type) {
-      case "base":
-        newId += "";
-        break;
-      case "backbone":
-        newId += "backbone_";
-        break;
-      case "planar":
-        newId += "planarbp_";
-        break;
-      case "aux":
-        newId += "auxbp_";
-        break;
-      default:
-        throw new Error(`Unknown type: ${type}`);
-    }
-    return newId + id;
   }
 
   /*
@@ -25187,7 +25429,8 @@ class RNA {
     let basei = this.getBase(i),
       basej = this.getBase(j);
     // Create ModelBP object for basepair
-    let mbp = new ModelBP(basei, basej, opt);
+    let mbp = new AuxBP(basei, basej, opt, this);
+    mbp.group = this;
     let indi, indj;
     [indi, indj] = [Math.min(basei.ind, basej.ind), Math.max(basei.ind, basej.ind)];
     // Add directly to aux
@@ -25207,7 +25450,7 @@ class RNA {
           }
         }
       }
-      this.addBPNow(basei, basej, mbp);
+      this.addBPNow(basei, basej, opt);
     }
   }
 
@@ -25219,16 +25462,15 @@ class RNA {
     let basei = this.getBase(i),
       basej = this.getBase(j);
     if (mbp === null) {
-      mbp = new ModelBP(basei, basej);
+      mbp = new AuxBP(basei, basej);
     }
+    mbp.group = this;
     this.auxBPs.push(mbp);
   }
-  addBPNow(i, j, mbp = null) {
+  addBPNow(i, j, opt = {}) {
     let basei = this.getBase(i),
       basej = this.getBase(j);
-    if (mbp === null) {
-      mbp = new ModelBP(basei, basej);
-    }
+    let mbp = new PlanarBP(basei, basej, opt, this);
     basei.setBP(mbp);
     basej.setBP(mbp);
   }
@@ -25286,30 +25528,16 @@ class RNA {
    */
   elOfBases() {
     let res = [];
+    // Draw compound node if parent group exist
+    if (this.group !== null) {
+      res.push(this.groupRNA.toCyEl());
+    }
     for (let i = 0; i < this.baseList.length; ++i) {
       let base = this.baseList[i];
-      let baseEl = {
-        data: {
-          id: this.getCyId(base.ind, "base"),
-          label: base.c,
-          num: base.getBaseNum()
-        }
-      };
-      // Set custom base classes
-      baseEl['classes'] = [...base.classes];
-      if (this.name !== null) {
-        baseEl['classes'].push(this.name);
+      let baseEl = base.toCyEl(isNumberDrawn(base, this.cfg.baseNumPeriod, this.baseList.length));
+      if (this.group !== null) {
+        baseEl.data.parent = this.groupRNA.getId();
       }
-      // Add baseNum class for node to draw base number
-      if (isNumberDrawn(base, this.cfg.baseNumPeriod, this.baseList.length)) {
-        baseEl["classes"].push("baseNum");
-      }
-      // Add class for base style
-      if (base.style !== null) {
-        baseEl["classes"].push(`basegroup${base.style.getId()}`);
-        baseEl["data"]["baseNumColor"] = base.style.baseNumColor;
-      }
-      baseEl['position'] = base.getCoords();
       res.push(baseEl);
     }
     return res;
@@ -25381,17 +25609,17 @@ class RNA {
     let res = [];
     for (let i = 0; i < this.baseList.length - 1; ++i) {
       let backbone = this.baseList[i].getBackbone();
-      if (backbone != DiscontinuousBackbone) {
+      if (!(backbone instanceof DiscontinuousBackbone)) {
         let el = {
           "data": {
-            id: this.getCyId(i, 'backbone'),
-            source: this.getCyId(i, 'base'),
-            target: this.getCyId(i + 1, 'base')
+            id: backbone.getId(),
+            source: this.baseList[i].getId(),
+            target: this.baseList[i + 1].getId()
           },
           "classes": ["backbone"]
         };
-        if (this.name !== null) {
-          el.classes.push(this.name);
+        if (this.getName() !== null) {
+          el.classes.push(this.getName());
         }
         res.push(el);
       }
@@ -25431,13 +25659,10 @@ class RNA {
    * Returns cytoscape edge element for one single bp
    */
   elOfSingleBP(bp) {
-    let edgeEl = bp.toCyElement();
-    if (this.name !== null) {
-      edgeEl.classes.push(this.name);
+    let edgeEl = bp.toCyEl();
+    if (this.getName() !== null) {
+      edgeEl.classes.push(this.getName());
     }
-    // Here, we need to correct source and target base id
-    edgeEl.data.source = this.getCyId(edgeEl.data.source, "base");
-    edgeEl.data.target = this.getCyId(edgeEl.data.target, "base");
     return edgeEl;
   }
 
@@ -25452,15 +25677,16 @@ class RNA {
       let j = base.getPartnerInd();
       if (j > base.ind) {
         let bp = base.getBP();
+        bp.ind = base.ind;
         let edgeEl = this.elOfSingleBP(bp);
-        edgeEl.data.id = this.getCyId(base.ind, "planar");
+        // edgeEl.data.id = getCyId(this.getName(), base.ind, "planar");
         edgeEl.classes.push("planarbp");
         if (cfg.layout == Layouts.LINE) {
           if (_.isUndefined(edgeEl.style)) {
             edgeEl.style = {};
           }
           let factor = cfg.bpLowerPlane ? 1 : -1;
-          edgeEl.style["control-point-distance"] = factor * (bp.partner3.ind - bp.partner5.ind) * 20;
+          edgeEl.style["control-point-distance"] = factor * bp.vIncrement(cfg.bpIncrement);
         }
         res.push(edgeEl);
       }
@@ -25476,15 +25702,16 @@ class RNA {
     let res = [];
     for (let i = 0; i < this.auxBPs.length; i++) {
       let bp = this.auxBPs[i];
+      bp.ind = i;
       let edgeEl = this.elOfSingleBP(bp);
-      edgeEl.data.id = this.getCyId(i, "aux");
+      // edgeEl.data.id = getCyId(this.getName(), i, "aux");
       edgeEl.classes.push("auxbp");
       if (cfg.layout == Layouts.LINE) {
         if (_.isUndefined(edgeEl.style)) {
           edgeEl.style = {};
         }
         let factor = cfg.bpLowerPlane ? 1 : -1;
-        edgeEl.style["control-point-distance"] = factor * (bp.partner3.ind - bp.partner5.ind) * 20;
+        edgeEl.style["control-point-distance"] = factor * bp.vIncrement(cfg.bpIncrement);
       }
       res.push(edgeEl);
     }
@@ -25498,10 +25725,6 @@ class RNA {
     let cfg = this.cfg;
     let res = [];
     let generalStyle = cfg.bpCyStyle(this.getSelector("edge.basepair"));
-    if (cfg.layout == Layouts.LINE) {
-      generalStyle.style["curve-style"] = "unbundled-bezier";
-      generalStyle.style["control-point-weight"] = 0.5;
-    }
     res.push(generalStyle);
     return res;
   }
@@ -25509,29 +25732,47 @@ class RNA {
     return [];
   }
   createCyFormat() {
-    let cfg = this.cfg;
-    drawBases(this.baseList, cfg);
+    // Here we draw the layout
+    drawBases(this.baseList, this.cfg);
     let basesCy = this.cyOfBases();
     let backbonesCy = this.cyOfBackbones();
     let bpsCy = this.cyOfBPs();
     let elements = [...basesCy.el, ...backbonesCy.el, ...bpsCy.el];
-    let styles = [...basesCy.style, ...backbonesCy.style, ...bpsCy.style, ...this.customStyle()];
+    let styles = [...basesCy.style, ...backbonesCy.style, ...bpsCy.style];
 
     // Set layout (base position)
-    let layoutDict = {
-      'name': 'preset'
-    };
-    let cyDist = {
+    return {
       elements: elements,
-      layout: layoutDict,
       style: styles
     };
-    return cyDist;
   }
-}
+
+  /**
+   * Return RNA drawing bounding box
+   * Make sure each base coords is computed in prior
+   */
+  getBoundingBox() {
+    let r = BaseRadius;
+    let c = this.baseList[0].getCoords();
+    let bbox = new BoundingBox(c.x - r, c.x + r, c.y - r, c.y + r);
+    this.baseList.forEach(base => bbox.updateFromCoords(base.getCoords(), r));
+    return bbox;
+  }
+};
+
+/**
+ * Basic class to draw one RNA
+ * @class
+ * @constructor
+ * @public
+ * @property {cytoscape} cy - cytoscape drawing
+ * @property {Array} baseList - Array of ModelBase
+ */
+class RNA extends mix(BaseClass).with(RNASuper) {}
 
 /**
  * Return true to show number of given base
+ * @private
  *
  * @param {ModelBase} mb - base in ModelBase
  * @param {int} period - base number period
@@ -36612,7 +36853,7 @@ elesfn$b.boundingBoxAt = function (fn) {
 };
 fn$3.boundingbox = fn$3.bb = fn$3.boundingBox;
 fn$3.renderedBoundingbox = fn$3.renderedBoundingBox;
-var bounds = elesfn$b;
+var bounds$1 = elesfn$b;
 
 var fn$2, elesfn$a;
 fn$2 = elesfn$a = {};
@@ -36783,7 +37024,7 @@ var edgePoints = Object.keys(pts).reduce(function (obj, name) {
   return obj;
 }, {});
 
-var dimensions = extend({}, position, bounds, widthHeight, edgePoints);
+var dimensions = extend({}, position, bounds$1, widthHeight, edgePoints);
 
 /*!
 Event object based on jQuery events, MIT license
@@ -56844,6 +57085,352 @@ cytoscape$1.version = version;
 // expose public apis (mostly for extensions)
 cytoscape$1.stylesheet = cytoscape$1.Stylesheet = Stylesheet;
 
+var pack = function pack(sizes) {
+	var layout = { size: [ 0, 0 ], boxes: [] };
+	var order = new Array(sizes.length);
+	for (var i = 0; i < sizes.length; i++) {
+		order[i] = i;
+	}
+
+	order.sort(function (a, b) {
+		return sizes[b][0] * sizes[b][1]
+		    - sizes[a][0] * sizes[a][1]
+	});
+
+	for (var i = 0; i < sizes.length; i++) {
+		var size = sizes[order[i]];
+		var positions = [ [ 0, 0 ] ];
+		for (var j = 0; j < layout.boxes.length; j++) {
+			var box = layout.boxes[j];
+			positions.push(
+				[ box.position[0], box.position[1] + box.size[1] ],
+				[ box.position[0] + box.size[0], box.position[1] ]
+			);
+		}
+
+		var best = { score: Infinity, position: positions[0] };
+		if (positions.length > 1) {
+			for (var j = 0; j < positions.length; j++) {
+				var position = positions[j];
+				var box = { size: size, position: position };
+				if (validate(layout.boxes, box)) {
+					var boxes = layout.boxes.slice();
+					boxes.push(box);
+
+					var score = rate({
+						size: bounds(boxes),
+						boxes: boxes
+					});
+
+					if (score < best.score) {
+						best.score = score;
+						best.position = position;
+					}
+				}
+			}
+		}
+
+		var box = { size: size, position: best.position };
+		layout.boxes.push(box);
+		layout.size = bounds(layout.boxes);
+	}
+
+	var boxes = layout.boxes.slice();
+	for (var i = 0; i < boxes.length; i++) {
+		layout.boxes[order[i]] = boxes[i];
+	}
+
+	return layout
+};
+
+function rate(layout) {
+	// return whitespace(layout)
+	return Math.max(layout.size[0], layout.size[1])
+}
+
+// finds the smallest `[ width, height ]` vector that contains all `boxes`
+function bounds(boxes) {
+	var width = 0;
+	var height = 0;
+	for (var i = 0; i < boxes.length; i++) {
+		var box = boxes[i];
+		var right = box.position[0] + box.size[0];
+		var bottom = box.position[1] + box.size[1];
+		if (right > width) {
+			width = right;
+		}
+		if (bottom > height) {
+			height = bottom;
+		}
+	}
+	return [ width, height ]
+}
+
+// determines if the region specified by `box` is clear of all other `boxes`
+function validate(boxes, box) {
+	var a = box;
+	for (var i = 0; i < boxes.length; i++) {
+		var b = boxes[i];
+		if (intersects(a, b)) {
+			return false
+		}
+	}
+	return true
+}
+
+// determines if box `a` and box `b` intersect
+function intersects(a, b) {
+	return a.position[0] < b.position[0] + b.size[0] && a.position[0] + a.size[0] > b.position[0]
+	    && a.position[1] < b.position[1] + b.size[1] && a.position[1] + a.size[1] > b.position[1]
+}
+
+var pack$1 = /*@__PURE__*/getDefaultExportFromCjs(pack);
+
+/**
+ * Panel superclass for multiple inheritance
+ */
+const PanelSuper = superclass => class extends superclass {
+  name = null;
+  rnaList = [];
+  rnaLimit = null;
+  cfg = new VARNAConfig();
+  auxBPs = [];
+  cy = null;
+
+  /**
+   * Set object name
+   * @param {string} name - object name
+   */
+  setName(name) {
+    this.name = name;
+  }
+
+  /**
+   * Get object name
+   */
+  getName(name) {
+    if (this.name === null) {
+      return null;
+    }
+    return this.name;
+  }
+
+  /**
+   * Add RNA into draw
+   * @param {RNA} rna - RNA to add
+   */
+  addRNA(rna) {
+    if (!(rna instanceof RNA)) {
+      throw new Error("Input is not an instance of RNA");
+    }
+    if (this.rnaLimit !== null && this.rnaLimit <= this.rnaList.length) {
+      // RNA limit reached, reject require of adding
+      // TODO: add warning
+      return -1;
+    }
+    if (rna.name === null) {
+      rna.name = `RNA${this.getRNACount()}`;
+    }
+    rna.group = this;
+    this.rnaList.push(rna);
+    return this.getRNACount() - 1;
+  }
+
+  /**
+   * Get RNA in the draw by given index
+   */
+  getRNA(ind) {
+    return this.rnaList[ind];
+  }
+
+  /**
+   * Return RNA number in the draw
+   */
+  getRNACount() {
+    return this.rnaList.length;
+  }
+
+  /**
+   * Get parent node position of given RNA
+   * @param {RNA|int} rna - RNA or index of interest
+   */
+  getPosOfRNA(rna) {
+    let ind;
+    if (Number.isInteger(rna)) {
+      ind = rna;
+    } else if (rna instanceof RNA) {
+      ind = this.rnaList.indexOf(rna);
+    } else {
+      throw new Error("Input should be either an integer or an instance of RNA");
+    }
+
+    // Note: this could be undefined
+    return this.positions[ind];
+  }
+
+  /**
+   * Add basepair interaction between two RNAs
+   * @param {ModelBase} basei - base i in ModelBase
+   * @param {ModelBase} basej - base j in ModelBase
+   * @param {Object} opt - options to create ModelBP
+   */
+  addBPAux(basei, basej, opt = {}) {
+    let mbp = new AuxBP(basei, basej, opt);
+    mbp.group = this;
+    this.auxBPs.push(mbp);
+  }
+  elOfAuxBPs() {
+    let res = [];
+    for (let i = 0; i < this.auxBPs.length; i++) {
+      let bp = this.auxBPs[i];
+      bp.ind = i;
+      let bpEl = bp.toCyEl();
+      bpEl.classes.push("auxbp");
+      res.push(bpEl);
+    }
+    return res;
+  }
+
+  /**
+   * Returns cytoscape elements and styles of all RNAs
+   */
+  createCyFormat() {
+    let res = {
+      'elements': [],
+      'style': []
+    };
+    this.rnaList.forEach(rna => {
+      let dist = rna.createCyFormat();
+      res.elements.push(...dist.elements);
+      res.style.push(...dist.style);
+    });
+    res.elements.push(...this.elOfAuxBPs());
+    return res;
+  }
+
+  // TODO: Implement a more sophistic one
+  /**
+  * Compute each RNA position using simple rectangle packing algorithm with pack (npm)
+  */
+  packRNAs() {
+    let padding = this.cfg.groupRNAPadding;
+    let margin = this.cfg.groupRNAMargin;
+    let dist = 2 * (padding + margin);
+    let rnaSizes = this.rnaList.map(rna => {
+      let box = rna.getBoundingBox().getSize();
+      return [box.w + dist, box.h + dist];
+    });
+    // minus y because of cytoscape y axis direction
+    this.positions = pack$1(rnaSizes).boxes.map(pos => ({
+      x: pos.position[0] + margin,
+      y: -pos.position[1] - margin
+    }));
+  }
+
+  /**
+   * Create cytoscape object
+   */
+  draw(container) {
+    let cyDist = {
+      'container': container,
+      'layout': {
+        'name': 'preset'
+      },
+      'elements': [],
+      'style': [...this.cfg.generalCyStyle()]
+    };
+    let t = this.createCyFormat();
+    cyDist.elements.push(...t.elements);
+    cyDist.style.push(...t.style);
+    var cy = cytoscape$1(cyDist);
+    this.cy = cy;
+    if (this.rnaList.length > 1) {
+      // Shift each RNA to their position
+      if (this.cfg.autoGroupPos) {
+        this.packRNAs();
+      }
+      let groups = this.cy.nodes('.groupRNA');
+      for (let i = 0; i < groups.length; i++) {
+        let end = this.getPosOfRNA(i);
+        // no shift
+        if (_.isUndefined(end)) {
+          continue;
+        }
+        let bbox = this.rnaList[i].getBoundingBox();
+        // we need this pos to be moved to rectangle packer result
+        let start = {
+          x: bbox.xMin - this.cfg.groupRNAPadding,
+          y: bbox.yMax + this.cfg.groupRNAPadding
+        };
+        groups[i].shift(toFactor(start, end));
+      }
+      this.cy.fit();
+    }
+  }
+};
+
+/**
+ * General Draw Panel class
+ */
+class Panel extends mix(BaseClass).with(PanelSuper) {}
+
+class PlaneCompare extends Panel {
+  rnaLimit = 2;
+  constructor(rna1, rna2) {
+    super();
+    // Set RNA name if not set yet
+    if (rna1.name === null) {
+      rna1.name = "rnaupper";
+    }
+    if (rna2.name === null) {
+      rna2.name = "rnalower";
+    }
+    this.addRNA(rna1);
+    this.addRNA(rna2);
+  }
+  addBP(basei, basej, opt = {}) {
+    throw new Error("PlaneCompare object does not support addBP. Use RNA.addBP instead.");
+  }
+  createCyFormat() {
+    let rna1 = this.getRNA(0);
+    let rna2 = this.getRNA(1);
+    let res = {
+      'elements': [],
+      'style': []
+    };
+    let cyRNA1 = rna1.createCyFormat();
+    res.elements.push(...cyRNA1.elements);
+    res.style.push(...cyRNA1.style);
+    // We only need bp from the second RNA and need to modify source and target
+    // Make sure RNA2 bases are same as RNA1
+    rna2.baseList.forEach((base, ind) => {
+      base.setCoords(rna1.getBase(ind).getCoords());
+    });
+    let rna2BP = rna2.cyOfBPs();
+    rna2BP.el.forEach(bp => {
+      bp.data.source = bp.data.source.replace(rna2.name, rna1.name);
+      bp.data.target = bp.data.target.replace(rna2.name, rna1.name);
+    });
+    res.elements.push(...rna2BP.el);
+    res.style.push(...rna2BP.style);
+    return res;
+  }
+  draw(container) {
+    let rna1 = this.getRNA(0);
+    let rna2 = this.getRNA(1);
+    // Force RNA1 is in upper plane and RNA2 in lower plane
+    rna1.cfg.set({
+      bpLowerPlane: false,
+      layout: Layouts.LINE
+    });
+    rna2.cfg.set({
+      bpLowerPlane: true,
+      layout: Layouts.LINE
+    });
+    super.draw(container);
+  }
+}
+
 var cytoscapeHtmlLabel = {exports: {}};
 
 (function (module) {
@@ -57158,7 +57745,18 @@ var cytoscapeHtmlLabelExports = cytoscapeHtmlLabel.exports;
 var htmlLabel = /*@__PURE__*/getDefaultExportFromCjs(cytoscapeHtmlLabelExports);
 
 htmlLabel(cytoscape$1);
-class Structure extends RNA {
+// Here we create a special panel that only takes one RNA by multi inheritance (mixin)
+
+class SingleDraw extends mix(BaseClass).with(PanelSuper, RNASuper) {
+  rnaList = [this];
+  rnaLimit = 1;
+}
+
+/**
+ * Draw a structure
+ * @extends SingleDraw
+ */
+class Structure extends SingleDraw {
   /**
    * Create Drawing from ebi basepair interaction json
    * @param {int} n - RNA length
@@ -57188,18 +57786,14 @@ class Structure extends RNA {
    *	Create cytoscape drawing
    *	@param {DOM element} container - where to draw cytoscape
    */
-  createCy(container) {
-    this.cfg;
-    let cyDist = this.createCyFormat();
-    cyDist["container"] = container;
-    var cy = cytoscape$1(cyDist);
-    this.cy = cy;
-
+  draw(container) {
+    super.draw(container);
     // HTML label
+    // TODO: drop htmllabel by using cytoscape node for basenum
     let baseNumLabel = this.cyOfBaseNum();
     let htmlLabel = [...baseNumLabel];
     if (htmlLabel.length != 0) {
-      cy.htmlLabel([...baseNumLabel]);
+      this.cy.htmlLabel([...baseNumLabel]);
     }
   }
 }
@@ -57224,16 +57818,12 @@ class MotifConfig extends VARNAConfig {
   dummyBPStyle = {
     color: "#DDDDDD"
   };
-  constructor(opt = {}) {
-    super();
-    Object.assign(this, opt);
-  }
 }
 
 /**
  * Motif drawing class
  */
-class Motif extends Structure {
+class Motif extends SingleDraw {
   cfg = new MotifConfig();
   static fromDBN(dbn, seq = "") {
     let newSeq = seq.length == 0 ? "" : seq.split("&").map(x => " " + x + " ").join("*");
@@ -57269,112 +57859,27 @@ class Motif extends Structure {
     _.zip(motif.baseList, baseNumLst).forEach(([base, num]) => base.setBaseNum(num));
     return motif;
   }
-  customStyle() {
+  createCyFormat() {
+    let res = super.createCyFormat();
     let dummy = this.cfg.dummyBaseStyle.toCyStyleInList(this.getSelector(`node.dummy`));
     let root = this.cfg.rootBaseStyle.toCyStyleInList(this.getSelector(`node.root`));
-    return [...dummy, ...root];
-  }
-}
-
-/**
- * Genreal Multi RNA Draw class
- */
-class MultiDraw {
-  rnaList = [];
-  rnaLimit = null;
-  constructor() {}
-
-  /**
-   * Add RNA into draw
-   * @param {RNA} rna - RNA to add
-   */
-  addRNA(rna) {
-    if (!rna instanceof RNA) {
-      throw new Error("Input is not an instance of RNA");
-    }
-    if (this.rnaLimit !== null && this.rnaLimit <= this.rnaList.length) {
-      // RNA limit reached, reject require of adding
-      // TODO: add warning
-      return -1;
-    }
-    this.rnaList.push(rna);
-    return this.getRNACount() - 1;
-  }
-
-  /**
-   * Get RNA in the draw by given index
-   */
-  getRNA(ind) {
-    return this.rnaList[ind];
-  }
-
-  /**
-   * Return RNA number in the draw
-   */
-  getRNACount() {
-    return this.rnaList.length;
-  }
-
-  /**
-   * @abstract
-   */
-  createCy(container) {
-    throw new Error("Method 'createCy(container)' must be implemented.");
-  }
-}
-
-class PlaneCompare extends MultiDraw {
-  rnaLimit = 2;
-  constructor(rna1, rna2) {
-    super();
-    this.addRNA(rna1);
-    this.addRNA(rna2);
-  }
-  createCy(container) {
-    let rna1 = this.getRNA(0);
-    let rna2 = this.getRNA(1);
-    // Force RNA1 is in upper plane and RNA2 in lower plane
-    rna1.cfg.set({
-      bpLowerPlane: false,
-      layout: Layouts.LINE
-    });
-    rna2.cfg.set({
-      bpLowerPlane: true,
-      layout: Layouts.LINE
-    });
-    // Set RNA name if not set yet
-    if (rna1.name === null) {
-      rna1.name = "rnaupper";
-    }
-    if (rna2.name === null) {
-      rna2.name = "rnalower";
-    }
-    let cyBase = rna1.createCyFormat();
-    cyBase["container"] = container;
-    // We only need bp from the second RNA and need to modify source and target
-    let rna2BP = rna2.cyOfBPs();
-    rna2BP.el.forEach(bp => {
-      bp.data.source = bp.data.source.replace(rna2.name, rna1.name);
-      bp.data.target = bp.data.target.replace(rna2.name, rna1.name);
-    });
-    cyBase.elements.push(...rna2BP.el);
-    cyBase.style.push(...rna2BP.style);
-    var cy = cytoscape$1(cyBase);
-    this.cy = cy;
+    res.style.push(...dummy, ...root);
+    return res;
   }
 }
 
 /**
  * Basic RNA draw function
  *
- * @param {string} dbn - RNA in dot-bracket notation (dbn)
  * @param {Element} container - HTML element to draw RNA
+ * @param {string} dbn - RNA in dot-bracket notation (dbn)
+ * @param {string} seq - RNA sequence
  * @param {VARNAConfig} varnaCfg - VARNA configuration to draw
  */
 function drawRNA(container, dbn, seq = "", varnaCfg = new VARNAConfig()) {
   let v = Structure.fromDBN(dbn, seq);
   v.setConfig(varnaCfg);
-  v.createCy(container);
+  v.draw(container);
   return v;
 }
 
@@ -57384,6 +57889,7 @@ exports.ModelBase = ModelBase;
 exports.ModelBaseStyle = ModelBaseStyle;
 exports.Motif = Motif;
 exports.MotifConfig = MotifConfig;
+exports.Panel = Panel;
 exports.PlaneCompare = PlaneCompare;
 exports.Puzzler = Puzzler;
 exports.RNA = RNA;
